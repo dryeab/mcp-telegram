@@ -1,7 +1,7 @@
 [project]
 name = "mcp-telegram"
 version = "0.1.0"
-description = "MCP server for Telegram"
+description = "MCP Server for Telegram"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Yeabsira Driba" }]
