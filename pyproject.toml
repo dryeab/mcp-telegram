@@ -12,8 +12,12 @@ keywords = ["git", "mcp", "llm", "automation", "telegram"]
 license = { text = "MIT" }
 dependencies = [
     "mcp[cli]>=1.6.0",
+    "pydantic>=2.11.1",
+    "pydantic-settings>=2.8.1",
+    "rich>=14.0.0",
     "telethon>=1.39.0",
     "typer>=0.15.2",
+    "xdg-base-dirs>=6.0.2",
 ]
 
 [build-system]
@@ -47,7 +51,7 @@ lines-between-types = 1
 order-by-type = false 
 
 [tool.ruff]
-line-length = 88
+line-length = 95
 target-version = "py310"
 
 [project.urls]
