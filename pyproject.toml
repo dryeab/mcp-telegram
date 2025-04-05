@@ -4,9 +4,16 @@ version = "0.1.0"
 description = "MCP server for Telegram"
 readme = "README.md"
 requires-python = ">=3.10"
+authors = [{ name = "Yeabsira Driba" }]
+maintainers = [
+    { name = "Yeabsira Driba", email = "dryeab@gmail.com" }
+]
+keywords = ["git", "mcp", "llm", "automation", "telegram"]
+license = { text = "MIT" }
 dependencies = [
     "mcp[cli]>=1.6.0",
     "telethon>=1.39.0",
+    "typer>=0.15.2",
 ]
 
 [build-system]
@@ -14,7 +21,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv]
-dev-dependencies = ["pyright>=1.1.389", "pytest>=8.3.3", "ruff>=0.8.0"]
+dev-dependencies = [
+    "pyright>=1.1.389",
+    "ruff>=0.8.0",
+    "twine>=6.1.0",
+]
 
 [project.scripts]
 mcp-telegram = "mcp_telegram:main"
