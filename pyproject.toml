@@ -28,4 +28,28 @@ dev-dependencies = [
 ]
 
 [project.scripts]
-mcp-telegram = "mcp_telegram:main"
+mcp-telegram = "mcp_telegram:app"
+
+[tool.pyright]
+include = ["src/mcp_telegram/**/*.py"]
+venvPath = "."
+venv = ".venv"
+strict = ["src/mcp_telegram/**/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = []
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+known-first-party = ["mcp_telegram"]
+lines-between-types = 1
+order-by-type = false 
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[project.urls]
+Repository = "https://github.com/dryeab/mcp-telegram"
+Issues = "https://github.com/dryeab/mcp-telegram/issues"
