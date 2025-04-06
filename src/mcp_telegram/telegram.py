@@ -1,7 +1,6 @@
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 from telethon import TelegramClient
-from telethon.tl.types.auth import SentCode
 from xdg_base_dirs import xdg_state_home
 
 
@@ -51,60 +50,3 @@ class Telegram:
     @property
     def client(self) -> TelegramClient:
         return self._client
-
-    async def send_code(self, phone: str) -> SentCode:
-        """
-        Send a code to the given phone number.
-
-        Args:
-            phone (`str`): The phone number to send the code to.
-
-        Returns:
-            `telethon.tl.types.auth.SentCode`: The token.
-
-        Examples:
-            >>> await client.send_code("+1234567890")
-        """
-        return await self._client.send_code_request(phone)
-
-    async def login(
-        self, phone_code_hash: str, code: str, password: str | None = None
-    ) -> None:
-        """
-        Login to the Telegram client.
-
-        Args:
-            phone_code_hash (`str`): The phone code hash to login to.
-            code (`str`): The code to login to.
-            password (`str`, optional): The 2FA password to login to.
-
-        Examples:
-            >>> await client.login("+1234567890", "123456")
-            >>> await client.login("+1234567890", "123456", "123456")
-        """
-        self._client.start()
-        if password:
-            await self._client.sign_in(
-                code=code, password=password, phone_code_hash=phone_code_hash
-            )
-        else:
-            await self._client.sign_in(code=code, phone_code_hash=phone_code_hash)
-
-        await self._client.send_message("me", "hey there")
-
-    async def connect(self) -> None:
-        """
-        Connect to the Telegram client.
-        """
-        await self._client.connect()
-
-    async def logout(self) -> bool:
-        """
-        Log out of the Telegram client.
-
-        Examples:
-            >>> await client.logout()
-        """
-        success = await self._client.log_out()
-
-        return success

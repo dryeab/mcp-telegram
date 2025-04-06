@@ -118,7 +118,7 @@ async def login() -> None:
         tg = Telegram(api_id=api_id, api_hash=api_hash)
 
         with console.status("[bold green]Connecting to Telegram...", spinner="dots"):
-            await tg.connect()
+            await tg.client.connect()
             console.print("\n[bold green]✓[/bold green] [dim]Connected to Telegram[/dim]")
 
         def code_callback() -> str:
