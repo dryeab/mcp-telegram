@@ -8,9 +8,6 @@ class Settings(BaseSettings):
     api_id: int
     api_hash: SecretStr
 
-    class Config:
-        case_sensitive = False
-
 
 class Telegram:
     """
