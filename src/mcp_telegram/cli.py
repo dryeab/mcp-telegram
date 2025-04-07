@@ -90,6 +90,8 @@ async def login() -> None:
         )
     )
 
+    tg = Telegram()
+
     console.print("\n[yellow]Please enter your credentials:[/yellow]")
 
     try:
@@ -115,7 +117,7 @@ async def login() -> None:
             "> "
         )
 
-        tg = Telegram(api_id=api_id, api_hash=api_hash)
+        tg.create_client(api_id=api_id, api_hash=api_hash)
 
         with console.status("[bold green]Connecting to Telegram...", spinner="dots"):
             await tg.client.connect()
@@ -162,6 +164,9 @@ async def login() -> None:
     except Exception as e:
         console.print(f"\n[bold red]✗ Error:[/bold red] {str(e)}", style="red")
         sys.exit(1)
+    finally:
+        if tg.client.is_connected():
+            tg.client.disconnect()
 
 
 @app.command()
