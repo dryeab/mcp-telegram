@@ -1,7 +1,12 @@
+from typing import Any
+
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 from telethon import TelegramClient
+from telethon.tl import functions, types
 from xdg_base_dirs import xdg_state_home
+
+from mcp_telegram.types import Contact
 
 
 class Settings(BaseSettings):
@@ -58,3 +63,78 @@ class Telegram:
         )
 
         return self._client
+
+    async def _list_contacts(self) -> types.contacts.Contacts:
+        """List all contacts in the user's Telegram contacts list.
+
+        Returns:
+            `types.contacts.Contacts`: The contacts in the user's Telegram contacts list.
+        """
+        if self._client is None:
+            raise RuntimeError("Client not created!")
+
+        contacts: Any = await self.client(functions.contacts.GetContactsRequest(hash=0))
+
+        assert isinstance(
+            contacts, types.contacts.Contacts
+        ), f"Expected types.contacts.Contacts, got {type(contacts).__name__}"
+
+        return contacts
+
+    async def search_contacts(self, query: str | None = None) -> list[Contact]:
+        """Search for contacts in the user's Telegram contacts list.
+
+        Args:
+            query (`str`, optional):
+                A query string to filter the contacts. If provided, the search will
+                return only contacts that match the query.
+
+        Returns:
+            list[Contact]: A list of contacts that match the query.
+        """
+
+        contacts = await self._list_contacts()
+
+        contact_ids = {contact.user_id for contact in contacts.contacts}
+        contact_users = [
+            user
+            for user in contacts.users
+            if user.id in contact_ids and isinstance(user, types.User)
+        ]
+
+        if not query:
+            # No query provided, return all actual contacts
+            return [
+                Contact(
+                    id=user.id,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    username=user.username,
+                    phone=user.phone,
+                )
+                for user in contact_users
+            ]
+
+        results: list[Contact] = []
+
+        lower_query = query.lower()
+        for user in contact_users:
+            # Check relevant fields for the query (case-insensitive)
+            match = (
+                (user.first_name and lower_query in user.first_name.lower())
+                or (user.last_name and lower_query in user.last_name.lower())
+                or (user.username and lower_query in user.username.lower())
+                or (user.phone and lower_query in user.phone.lower())
+            )
+            if match:
+                results.append(
+                    Contact(
+                        id=user.id,
+                        first_name=user.first_name,
+                        last_name=user.last_name,
+                        username=user.username,
+                        phone=user.phone,
+                    )
+                )
+
+        return results

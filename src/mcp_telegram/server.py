@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
+from mcp_telegram.types import Contact
 
 # TODO (Yeabsira): Some clients don't support Context.
 # @dataclass
@@ -58,3 +59,27 @@ async def send_message(recipient: str, message: str) -> str:
         return "Message sent"
     except Exception as e:
         return f"Error sending message: {e}"
+
+
+@mcp.tool()
+async def search_contacts(query: str | None = None) -> list[Contact]:
+    """Search for contacts in the user's Telegram contacts list.
+
+    Retrieves the user's contacts and filters them based on the provided query.
+    The query performs a case-insensitive search against the contact's
+    first name, last name, username, and phone number.
+
+    Args:
+        query (`str`, optional):
+            A query string to filter the contacts. If provided, the search
+            will return only contacts where the query string is found within
+            their first name, last name, username, or phone number.
+            If None or empty, all contacts are returned.
+
+    Returns:
+        list[Contact]:
+            A list of contacts that match the query including the contact's
+            id, first name, last name, username, and phone number.
+    """
+
+    return await tg.search_contacts(query)
