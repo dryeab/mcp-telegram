@@ -103,3 +103,51 @@ async def search_chats(query: str = "") -> list[Chat]:
     """
 
     return await tg.search_chats(query)
+
+
+@mcp.tool()
+async def get_draft(entity: str) -> str:
+    """Get the draft message for a specific entity.
+
+    Finds the draft message for an entity specified by username, chat_id,
+    phone number, or 'me'.
+
+    Args:
+        entity (`str`):
+            The identifier of the entity to get the draft message for.
+            This can be a Telegram chat ID, a username, a phone number, or 'me'.
+
+    Returns:
+        `str`:
+            The draft message for the specific entity.
+    """
+
+    return await tg.get_draft(entity)
+
+
+@mcp.tool()
+async def set_draft(entity: str, message: str) -> str:
+    """Set a draft message for a specific entity.
+
+    Sets a draft message for an entity specified by username, chat_id,
+    phone number, or 'me'.
+
+    Args:
+        entity (`str`):
+            The identifier of the entity to save the draft message for.
+            This can be a Telegram chat ID, a username, a phone number, or 'me'.
+
+        message (`str`):
+            The message to save as a draft.
+
+    Returns:
+        `str`:
+            A success message if saved, or an error message if failed.
+    """
+
+    try:
+        if await tg.set_draft(entity, message):
+            return "Draft saved"
+        return "Draft not saved"
+    except Exception as e:
+        return f"Error saving draft: {e}"

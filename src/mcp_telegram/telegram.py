@@ -230,3 +230,47 @@ class Telegram:
                 )
 
         return results
+
+    async def get_draft(self, entity: str) -> str:
+        """Get the draft message from a specific entity.
+
+        Args:
+            entity (`str`): The identifier of the entity to get the draft message from.
+
+        Returns:
+            `str`: The draft message from the specific entity.
+        """
+
+        draft = await self.client.get_drafts(int(entity) if entity.isdigit() else entity)
+
+        assert isinstance(
+            draft, custom.Draft
+        ), f"Expected custom.Draft, got {type(draft).__name__}"
+
+        if isinstance(draft.text, str):
+            return draft.text
+
+        return ""
+
+    async def set_draft(self, entity: str, message: str) -> Any:
+        """Set a draft message for a specific entity.
+
+        Args:
+            entity (`str`): The identifier of the entity to save the draft message for.
+            message (`str`): The message to save as a draft.
+
+        Returns:
+            `Any`: The result of the `set_message` method.
+        """
+
+        target_entity_peer_id = (
+            int(entity) if entity.isdigit() else (await self.client.get_peer_id(entity))
+        )
+
+        draft = await self.client.get_drafts(target_entity_peer_id)
+
+        assert isinstance(
+            draft, custom.Draft
+        ), f"Expected custom.Draft, got {type(draft).__name__}"
+
+        return await draft.set_message(message)  # type: ignore
