@@ -8,10 +8,10 @@ from typing import Any
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 from telethon import TelegramClient
-from telethon.tl import custom, functions, types
+from telethon.tl import custom, functions, patched, types
 from xdg_base_dirs import xdg_state_home
 
-from mcp_telegram.types import Contact, Dialog, DialogType
+from mcp_telegram.types import Contact, Dialog, DialogType, Message
 
 
 class Settings(BaseSettings):
@@ -265,3 +265,40 @@ class Telegram:
         ), f"Expected custom.Draft, got {type(draft).__name__}"
 
         return await draft.set_message(message)  # type: ignore
+
+    async def get_messages(self, entity: str, limit: int) -> list[Message]:
+        """Get messages from a specific entity.
+
+        Args:
+            entity (`str`): The identifier of the entity to get messages from.
+            limit (`int`): The maximum number of messages to get.
+
+        Returns:
+            `list[Message]`: A list of messages from the specific entity.
+        """
+
+        messages = await self.client.get_messages(
+            int(entity) if entity.isdigit() else entity, limit=limit
+        )
+
+        messages = [message for message in messages if isinstance(message, patched.Message)]  # type: ignore
+
+        results: list[Message] = []
+        for message in messages:
+            assert isinstance(message.message, str | None)
+
+            results.append(
+                Message(
+                    message_id=message.id,
+                    sender_id=(
+                        await self.client.get_peer_id(message.from_id)
+                        if message.from_id
+                        else None
+                    ),
+                    message=message.message,
+                    outgoing=message.out,
+                    date=message.date,
+                )
+            )
+
+        return results

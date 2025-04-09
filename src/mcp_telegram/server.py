@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
-from mcp_telegram.types import Contact, Dialog
+from mcp_telegram.types import Contact, Dialog, Message
 
 # TODO (Yeabsira): Some clients don't support Context.
 # @dataclass
@@ -26,8 +26,17 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[None]:
         tg.client.disconnect()
 
 
+instructions = """
+You are a helpful assistant that can send messages and 
+get messages from Telegram users, groups, and channels.
+"""
+
 tg = Telegram()
-mcp = FastMCP("mcp-telegram", lifespan=app_lifespan)
+mcp = FastMCP(
+    "mcp-telegram",
+    lifespan=app_lifespan,
+    instructions=instructions,
+)
 
 
 @mcp.tool()
@@ -151,3 +160,26 @@ async def set_draft(entity: str, message: str) -> str:
         return "Draft not saved"
     except Exception as e:
         return f"Error saving draft: {e}"
+
+
+@mcp.tool()
+async def get_messages(entity: str, limit: int) -> list[Message]:
+    """Get messages from a specific entity.
+
+    Retrieves messages from an entity specified by username, chat_id,
+    phone number, or 'me'.
+
+    Args:
+        entity (`str`):
+            The identifier of the entity to get messages from.
+            This can be a Telegram chat ID, a username, a phone number, or 'me'.
+
+        limit (`int`):
+            The maximum number of messages to retrieve.
+
+    Returns:
+        `list[Message]`:
+            A list of messages from the entity.
+    """
+
+    return await tg.get_messages(entity, limit)
