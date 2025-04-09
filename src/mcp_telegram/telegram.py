@@ -11,7 +11,7 @@ from telethon import TelegramClient
 from telethon.tl import custom, functions, types
 from xdg_base_dirs import xdg_state_home
 
-from mcp_telegram.types import Chat, ChatType, Contact
+from mcp_telegram.types import Contact, Dialog, DialogType
 
 
 class Settings(BaseSettings):
@@ -161,48 +161,48 @@ class Telegram:
 
         return results
 
-    async def _list_chats(self) -> list[custom.Dialog]:
-        """List all chats in the user's Telegram chats list.
+    async def _list_dialogs(self) -> list[custom.Dialog]:
+        """List all dialogs in the user's Telegram dialogs list.
 
         Returns:
-            `list[custom.Dialog]`: A list of chats in the user's Telegram chats list.
+            `list[custom.Dialog]`: A list of dialogs in the user's Telegram dialogs list.
         """
         if self._client is None:
             raise RuntimeError("Client not created!")
 
         return await self.client.iter_dialogs().collect()
 
-    async def search_chats(self, query: str) -> list[Chat]:
-        """Search for chats in the user's Telegram chats list.
+    async def search_dialogs(self, query: str) -> list[Dialog]:
+        """Search for dialogs in the user's Telegram dialogs list.
 
         Args:
             query (`str`):
-                A query string to filter the chats. If provided, the search will
-                return only chats where the query string is found within
-                the chat's title.
+                A query string to filter the dialogs. If provided, the search will
+                return only dialogs where the query string is found within
+                the dialog's title.
 
         Returns:
-            `list[Chat]`: A list of chats that match the query.
+            `list[Dialog]`: A list of dialogs that match the query.
         """
 
-        dialogs = await self._list_chats()
+        dialogs = await self._list_dialogs()
 
-        results: list[Chat] = []
+        results: list[Dialog] = []
 
         for dialog in dialogs:
             assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))
 
-            chat_type: ChatType
+            dialog_type: DialogType
             if dialog.is_user:
                 assert isinstance(dialog.entity, types.User)
                 if dialog.entity.bot:
-                    chat_type = ChatType.BOT
+                    dialog_type = DialogType.BOT
                 else:
-                    chat_type = ChatType.USER
+                    dialog_type = DialogType.USER
             elif dialog.is_group:
-                chat_type = ChatType.GROUP
+                dialog_type = DialogType.GROUP
             else:
-                chat_type = ChatType.CHANNEL
+                dialog_type = DialogType.CHANNEL
 
             username: str | None = None
             if isinstance(dialog.entity, types.User | types.Channel):
@@ -220,10 +220,10 @@ class Telegram:
 
             if match:
                 results.append(
-                    Chat(
+                    Dialog(
                         id=dialog.id,
                         title=dialog.name,
-                        type=chat_type,
+                        type=dialog_type,
                         username=username,
                         unread_messages_count=dialog.unread_count,
                     )

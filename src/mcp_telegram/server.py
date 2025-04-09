@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
-from mcp_telegram.types import Chat, Contact
+from mcp_telegram.types import Contact, Dialog
 
 # TODO (Yeabsira): Some clients don't support Context.
 # @dataclass
@@ -84,25 +84,25 @@ async def search_contacts(query: str | None = None) -> list[Contact]:
 
 
 @mcp.tool()
-async def search_chats(query: str = "") -> list[Chat]:
-    """Search for chats in the user's Telegram chats list.
+async def search_dialogs(query: str = "") -> list[Dialog]:
+    """Search for dialogs in the user's Telegram dialogs list.
 
-    Retrieves the user's chats and filters them based on the provided query.
-    The query performs a case-insensitive search against the chat's title and username.
+    Retrieves the user's dialogs and filters them based on the provided query.
+    The query performs a case-insensitive search against the dialog's title and username.
 
     Args:
         query (`str`, optional):
-            A query string to filter the chats. If provided, the search
-            will return only chats where the query string is found within
-            the chat's title or username. If empty, all chats are returned.
+            A query string to filter the dialogs. If provided, the search
+            will return only dialogs where the query string is found within
+            the dialog's title or username. If empty, all dialogs are returned.
 
     Returns:
-        `list[Chat]`:
-            A list of chats that match the query including the chat's
+        `list[Dialog]`:
+            A list of dialogs that match the query including the dialog's
             id, title, username, type, and unread messages count.
     """
 
-    return await tg.search_chats(query)
+    return await tg.search_dialogs(query)
 
 
 @mcp.tool()

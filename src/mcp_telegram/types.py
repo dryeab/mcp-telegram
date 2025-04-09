@@ -3,7 +3,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 
-class ChatType(Enum):
+class DialogType(Enum):
     USER = "user"
     GROUP = "group"
     CHANNEL = "channel"
@@ -18,9 +18,9 @@ class Contact(BaseModel):
     phone: str | None = None
 
 
-class Chat(BaseModel):
+class Dialog(BaseModel):
     id: int
     title: str
     username: str | None = None
-    type: ChatType
+    type: DialogType
     unread_messages_count: int
