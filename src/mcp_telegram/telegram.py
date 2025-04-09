@@ -1,3 +1,6 @@
+"""Telegram client wrapper."""
+
+# pyright: reportMissingTypeStubs=false
 from typing import Any
 
 from pydantic import SecretStr
@@ -10,6 +13,8 @@ from mcp_telegram.types import Contact
 
 
 class Settings(BaseSettings):
+    """Settings for the Telegram client."""
+
     api_id: int
     api_hash: SecretStr
 
