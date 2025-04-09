@@ -1,15 +1,17 @@
 """Telegram client wrapper."""
 
 # pyright: reportMissingTypeStubs=false
+# pyright: reportUnknownMemberType=false
+
 from typing import Any
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 from telethon import TelegramClient
-from telethon.tl import functions, types
+from telethon.tl import custom, functions, types
 from xdg_base_dirs import xdg_state_home
 
-from mcp_telegram.types import Contact
+from mcp_telegram.types import Chat, ChatType, Contact
 
 
 class Settings(BaseSettings):
@@ -69,6 +71,21 @@ class Telegram:
 
         return self._client
 
+    async def send_message(self, recipient: str, message: str) -> None:
+        """Send a message to a Telegram user, group, or channel.
+
+        Args:
+            recipient (`str`): The recipient of the message.
+            message (`str`): The message to send.
+        """
+        if self._client is None:
+            raise RuntimeError("Client not created!")
+
+        # If recipient is a string of digits, it is a chat id. Cast it to an integer.
+        await self.client.send_message(
+            int(recipient) if recipient.isdigit() else recipient, message
+        )
+
     async def _list_contacts(self) -> types.contacts.Contacts:
         """List all contacts in the user's Telegram contacts list.
 
@@ -95,7 +112,7 @@ class Telegram:
                 return only contacts that match the query.
 
         Returns:
-            list[Contact]: A list of contacts that match the query.
+            `list[Contact]`: A list of contacts that match the query.
         """
 
         contacts = await self._list_contacts()
@@ -139,6 +156,76 @@ class Telegram:
                         last_name=user.last_name,
                         username=user.username,
                         phone=user.phone,
+                    )
+                )
+
+        return results
+
+    async def _list_chats(self) -> list[custom.Dialog]:
+        """List all chats in the user's Telegram chats list.
+
+        Returns:
+            `list[custom.Dialog]`: A list of chats in the user's Telegram chats list.
+        """
+        if self._client is None:
+            raise RuntimeError("Client not created!")
+
+        return await self.client.iter_dialogs().collect()
+
+    async def search_chats(self, query: str) -> list[Chat]:
+        """Search for chats in the user's Telegram chats list.
+
+        Args:
+            query (`str`):
+                A query string to filter the chats. If provided, the search will
+                return only chats where the query string is found within
+                the chat's title.
+
+        Returns:
+            `list[Chat]`: A list of chats that match the query.
+        """
+
+        dialogs = await self._list_chats()
+
+        results: list[Chat] = []
+
+        for dialog in dialogs:
+            assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))
+
+            chat_type: ChatType
+            if dialog.is_user:
+                assert isinstance(dialog.entity, types.User)
+                if dialog.entity.bot:
+                    chat_type = ChatType.BOT
+                else:
+                    chat_type = ChatType.USER
+            elif dialog.is_group:
+                chat_type = ChatType.GROUP
+            else:
+                chat_type = ChatType.CHANNEL
+
+            username: str | None = None
+            if isinstance(dialog.entity, types.User | types.Channel):
+                username = dialog.entity.username
+
+            lower_query = query.lower()
+
+            match = True
+            if query:
+                match = lower_query in dialog.name.lower() or (
+                    username and lower_query in username.lower()
+                )
+
+            assert isinstance(dialog.id, int) and isinstance(dialog.unread_count, int)
+
+            if match:
+                results.append(
+                    Chat(
+                        id=dialog.id,
+                        title=dialog.name,
+                        type=chat_type,
+                        username=username,
+                        unread_messages_count=dialog.unread_count,
                     )
                 )
 

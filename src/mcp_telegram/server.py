@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
-from mcp_telegram.types import Contact
+from mcp_telegram.types import Chat, Contact
 
 # TODO (Yeabsira): Some clients don't support Context.
 # @dataclass
@@ -48,14 +48,12 @@ async def send_message(recipient: str, message: str) -> str:
             including **bold**, __italic__, `monospace`, and [URL](links).
 
     Returns:
-        str: A success message if sent, or an error message if failed.
+        `str`:
+            A success message if sent, or an error message if failed.
     """
 
     try:
-        # If recipient is a string of digits, it is a chat id. Cast it to an integer.
-        await tg.client.send_message(
-            int(recipient) if recipient.isdigit() else recipient, message
-        )
+        await tg.send_message(recipient, message)
         return "Message sent"
     except Exception as e:
         return f"Error sending message: {e}"
@@ -77,9 +75,31 @@ async def search_contacts(query: str | None = None) -> list[Contact]:
             If None or empty, all contacts are returned.
 
     Returns:
-        list[Contact]:
+        `list[Contact]`:
             A list of contacts that match the query including the contact's
             id, first name, last name, username, and phone number.
     """
 
     return await tg.search_contacts(query)
+
+
+@mcp.tool()
+async def search_chats(query: str = "") -> list[Chat]:
+    """Search for chats in the user's Telegram chats list.
+
+    Retrieves the user's chats and filters them based on the provided query.
+    The query performs a case-insensitive search against the chat's title and username.
+
+    Args:
+        query (`str`, optional):
+            A query string to filter the chats. If provided, the search
+            will return only chats where the query string is found within
+            the chat's title or username. If empty, all chats are returned.
+
+    Returns:
+        `list[Chat]`:
+            A list of chats that match the query including the chat's
+            id, title, username, type, and unread messages count.
+    """
+
+    return await tg.search_chats(query)
