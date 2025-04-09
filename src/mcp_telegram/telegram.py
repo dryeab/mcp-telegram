@@ -78,9 +78,6 @@ class Telegram:
             recipient (`str`): The recipient of the message.
             message (`str`): The message to send.
         """
-        if self._client is None:
-            raise RuntimeError("Client not created!")
-
         # If recipient is a string of digits, it is a chat id. Cast it to an integer.
         await self.client.send_message(
             int(recipient) if recipient.isdigit() else recipient, message
@@ -92,9 +89,6 @@ class Telegram:
         Returns:
             `types.contacts.Contacts`: The contacts in the user's Telegram contacts list.
         """
-        if self._client is None:
-            raise RuntimeError("Client not created!")
-
         contacts: Any = await self.client(functions.contacts.GetContactsRequest(hash=0))
 
         assert isinstance(
@@ -167,9 +161,6 @@ class Telegram:
         Returns:
             `list[custom.Dialog]`: A list of dialogs in the user's Telegram dialogs list.
         """
-        if self._client is None:
-            raise RuntimeError("Client not created!")
-
         return await self.client.iter_dialogs().collect()
 
     async def search_dialogs(self, query: str) -> list[Dialog]:
