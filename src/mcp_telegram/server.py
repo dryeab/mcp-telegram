@@ -163,7 +163,12 @@ async def set_draft(entity: str, message: str) -> str:
 
 
 @mcp.tool()
-async def get_messages(entity: str, limit: int) -> list[Message]:
+async def get_messages(
+    entity: str,
+    limit: int = 20,
+    unread: bool = False,
+    mark_as_read: bool = False,
+) -> list[Message]:
     """Get messages from a specific entity.
 
     Retrieves messages from an entity specified by username, chat_id,
@@ -174,12 +179,29 @@ async def get_messages(entity: str, limit: int) -> list[Message]:
             The identifier of the entity to get messages from.
             This can be a Telegram chat ID, a username, a phone number, or 'me'.
 
-        limit (`int`):
+        limit (`int`, optional):
             The maximum number of messages to retrieve.
+            Defaults to 20.
+
+        unread (`bool`, optional):
+            Whether to get only unread messages.
+            Defaults to False.
+
+        mark_as_read (`bool`, optional):
+            Whether to mark the messages as read.
+            Defaults to False.
 
     Returns:
         `list[Message]`:
             A list of messages from the entity.
     """
 
-    return await tg.get_messages(entity, limit)
+    try:
+        return await tg.get_messages(
+            int(entity) if entity.lstrip("-").isdigit() else entity,
+            limit,
+            unread,
+            mark_as_read,
+        )
+    except Exception as e:
+        return f"Error getting messages: {e}"

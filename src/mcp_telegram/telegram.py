@@ -3,6 +3,9 @@
 # pyright: reportMissingTypeStubs=false
 # pyright: reportUnknownMemberType=false
 
+import itertools
+import logging
+
 from typing import Any
 
 from pydantic import SecretStr
@@ -11,7 +14,9 @@ from telethon import TelegramClient
 from telethon.tl import custom, functions, patched, types
 from xdg_base_dirs import xdg_state_home
 
-from mcp_telegram.types import Contact, Dialog, DialogType, Message
+from mcp_telegram.types import Contact, Dialog, Message
+
+logger = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -80,7 +85,7 @@ class Telegram:
         """
         # If recipient is a string of digits, it is a chat id. Cast it to an integer.
         await self.client.send_message(
-            int(recipient) if recipient.isdigit() else recipient, message
+            int(recipient) if recipient.lstrip("-").isdigit() else recipient, message
         )
 
     async def _list_contacts(self) -> types.contacts.Contacts:
@@ -183,18 +188,6 @@ class Telegram:
         for dialog in dialogs:
             assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))
 
-            dialog_type: DialogType
-            if dialog.is_user:
-                assert isinstance(dialog.entity, types.User)
-                if dialog.entity.bot:
-                    dialog_type = DialogType.BOT
-                else:
-                    dialog_type = DialogType.USER
-            elif dialog.is_group:
-                dialog_type = DialogType.GROUP
-            else:
-                dialog_type = DialogType.CHANNEL
-
             username: str | None = None
             if isinstance(dialog.entity, types.User | types.Channel):
                 username = dialog.entity.username
@@ -207,18 +200,8 @@ class Telegram:
                     username and lower_query in username.lower()
                 )
 
-            assert isinstance(dialog.id, int) and isinstance(dialog.unread_count, int)
-
             if match:
-                results.append(
-                    Dialog(
-                        id=dialog.id,
-                        title=dialog.name,
-                        type=dialog_type,
-                        username=username,
-                        unread_messages_count=dialog.unread_count,
-                    )
-                )
+                results.append(Dialog.from_custom_dialog(dialog))
 
         return results
 
@@ -232,7 +215,9 @@ class Telegram:
             `str`: The draft message from the specific entity.
         """
 
-        draft = await self.client.get_drafts(int(entity) if entity.isdigit() else entity)
+        draft = await self.client.get_drafts(
+            int(entity) if entity.lstrip("-").isdigit() else entity
+        )
 
         assert isinstance(
             draft, custom.Draft
@@ -255,7 +240,9 @@ class Telegram:
         """
 
         target_entity_peer_id = (
-            int(entity) if entity.isdigit() else (await self.client.get_peer_id(entity))
+            int(entity)
+            if entity.lstrip("-").isdigit()
+            else (await self.client.get_peer_id(entity))
         )
 
         draft = await self.client.get_drafts(target_entity_peer_id)
@@ -266,26 +253,81 @@ class Telegram:
 
         return await draft.set_message(message)  # type: ignore
 
-    async def get_messages(self, entity: str, limit: int) -> list[Message]:
+    async def _get_dialog(self, entity: str | int) -> Dialog | None:
+        """Get a dialog object from a specific entity.
+
+        Args:
+            entity (`str | int`): The entity to get the dialog from.
+
+        Returns:
+            `Dialog | None`: The dialog object for the specific entity,
+                or `None` if the entity is not found.
+        """
+
+        input_peer = await self.client.get_input_entity(entity)
+
+        result: Any = await self.client(
+            functions.messages.GetPeerDialogsRequest(
+                peers=[types.InputDialogPeer(peer=input_peer)]
+            )
+        )
+
+        assert isinstance(
+            result, types.messages.PeerDialogs
+        ), f"Expected types.messages.PeerDialogs, got {type(result).__name__}"
+
+        if result and result.dialogs and isinstance(result.dialogs[0], types.Dialog):
+            entities: dict[int, types.User | types.Chat | types.Channel] = {}
+            for x in itertools.chain(result.users, result.chats):
+                if isinstance(x, (types.User | types.Chat | types.Channel)):
+                    entities[x.id] = x
+
+            return Dialog.from_custom_dialog(
+                custom.Dialog(
+                    client=self.client,
+                    dialog=result.dialogs[0],
+                    entities=entities,
+                    message=None,
+                )
+            )
+
+        return None
+
+    async def get_messages(
+        self,
+        entity: str | int,
+        limit: int = 20,
+        unread: bool = False,
+        mark_as_read: bool = False,
+    ) -> list[Message]:
         """Get messages from a specific entity.
 
         Args:
-            entity (`str`): The identifier of the entity to get messages from.
-            limit (`int`): The maximum number of messages to get.
+            entity (`str | int`): The entity to get messages from.
+            limit (`int`, optional): The maximum number of messages to get.
+            unread (`bool`, optional): Whether to get only unread messages.
+            mark_as_read (`bool`, optional): Whether to mark the messages as read.
 
         Returns:
             `list[Message]`: A list of messages from the specific entity.
         """
 
-        messages = await self.client.get_messages(
-            int(entity) if entity.isdigit() else entity, limit=limit
-        )
+        peer_id = await self.client.get_peer_id(entity)
 
+        if unread:
+            dialog = await self._get_dialog(entity)
+            if dialog:
+                limit = min(limit, dialog.unread_messages_count)
+
+        messages = await self.client.get_messages(peer_id, limit=limit)
         messages = [message for message in messages if isinstance(message, patched.Message)]  # type: ignore
 
         results: list[Message] = []
         for message in messages:
             assert isinstance(message.message, str | None)
+
+            if mark_as_read:
+                await message.mark_read()
 
             results.append(
                 Message(
@@ -293,7 +335,7 @@ class Telegram:
                     sender_id=(
                         await self.client.get_peer_id(message.from_id)
                         if message.from_id
-                        else None
+                        else None  # Anonymous messages don't have a sender
                     ),
                     message=message.message,
                     outgoing=message.out,
