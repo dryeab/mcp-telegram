@@ -6,11 +6,6 @@ from mcp.server.fastmcp import FastMCP
 from mcp_telegram.telegram import Telegram
 from mcp_telegram.types import Contact, Dialog, Message
 
-# TODO (Yeabsira): Some clients don't support Context.
-# @dataclass
-# class AppContext:
-#     tg: Telegram
-
 
 @asynccontextmanager
 async def app_lifespan(server: FastMCP) -> AsyncIterator[None]:
@@ -196,12 +191,9 @@ async def get_messages(
             A list of messages from the entity.
     """
 
-    try:
-        return await tg.get_messages(
-            int(entity) if entity.lstrip("-").isdigit() else entity,
-            limit,
-            unread,
-            mark_as_read,
-        )
-    except Exception as e:
-        return f"Error getting messages: {e}"
+    return await tg.get_messages(
+        int(entity) if entity.lstrip("-").isdigit() else entity,
+        limit,
+        unread,
+        mark_as_read,
+    )
