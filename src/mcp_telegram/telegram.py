@@ -9,12 +9,11 @@ from typing import Any
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
-from telethon import TelegramClient  # type: ignore
-from telethon.tl import custom, functions, patched, types  # type: ignore
+from telethon import TelegramClient, hints, types  # type: ignore
+from telethon.tl import custom, functions, patched  # type: ignore
 from xdg_base_dirs import xdg_state_home
 
 from mcp_telegram.types import (
-    Contact,
     Dialog,
     DownloadedMedia,
     Media,
@@ -67,7 +66,8 @@ class Telegram:
             `telethon.TelegramClient`: The created Telegram client.
 
         Raises:
-            `pydantic_core.ValidationError`: If `api_id` and `api_hash` are not provided.
+            `pydantic_core.ValidationError`: If `api_id` and `api_hash`
+            are not provided.
         """
         if self._client is not None:
             return self._client
@@ -94,109 +94,6 @@ class Telegram:
             message (`str`): The message to send.
         """
         await self.client.send_message(entity, message)
-
-    async def search_contacts(self, query: str | None = None) -> list[Contact]:
-        """Search for contacts in the user's Telegram contacts list.
-
-        Args:
-            query (`str`, optional):
-                A query string to filter the contacts. If provided, the search will
-                return only contacts that match the query.
-
-        Returns:
-            `list[Contact]`: A list of contacts that match the query.
-        """
-
-        contacts: Any = await self.client(functions.contacts.GetContactsRequest(hash=0))
-
-        assert isinstance(
-            contacts, types.contacts.Contacts
-        ), f"Expected types.contacts.Contacts, got {type(contacts).__name__}"
-
-        contact_ids = {contact.user_id for contact in contacts.contacts}
-        contact_users = [
-            user
-            for user in contacts.users
-            if user.id in contact_ids and isinstance(user, types.User)
-        ]
-
-        if not query:
-            # No query provided, return all actual contacts
-            return [
-                Contact(
-                    id=user.id,
-                    first_name=user.first_name,
-                    last_name=user.last_name,
-                    username=user.username,
-                    phone=user.phone,
-                )
-                for user in contact_users
-            ]
-
-        results: list[Contact] = []
-
-        lower_query = query.lower()
-        for user in contact_users:
-            # Check relevant fields for the query (case-insensitive)
-            match = (
-                (user.first_name and lower_query in user.first_name.lower())
-                or (user.last_name and lower_query in user.last_name.lower())
-                or (user.username and lower_query in user.username.lower())
-                or (user.phone and lower_query in user.phone.lower())
-            )
-            if match:
-                results.append(
-                    Contact(
-                        id=user.id,
-                        first_name=user.first_name,
-                        last_name=user.last_name,
-                        username=user.username,
-                        phone=user.phone,
-                    )
-                )
-
-        return results
-
-    async def search_dialogs(self, query: str) -> list[Dialog]:
-        """Search for dialogs in the user's Telegram dialogs list.
-
-        Args:
-            query (`str`):
-                A query string to filter the dialogs. If provided, the search will
-                return only dialogs where the query string is found within
-                the dialog's title.
-
-        Returns:
-            `list[Dialog]`: A list of dialogs that match the query.
-        """
-
-        dialogs = [
-            dialog
-            for dialog in await self.client.iter_dialogs().collect()  # type: ignore
-            if isinstance(dialog, custom.Dialog)
-        ]
-
-        results: list[Dialog] = []
-
-        for dialog in dialogs:
-            assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))  # type: ignore
-
-            username: str | None = None
-            if isinstance(dialog.entity, types.User | types.Channel):
-                username = dialog.entity.username
-
-            lower_query = query.lower()
-
-            match = True
-            if query:
-                match = lower_query in dialog.name.lower() or (
-                    username and lower_query in username.lower()
-                )
-
-            if match:
-                results.append(Dialog.from_custom_dialog(dialog))
-
-        return results
 
     async def get_draft(self, entity: str | int) -> str:
         """Get the draft message from a specific entity.
@@ -238,46 +135,6 @@ class Telegram:
 
         return await draft.set_message(message)  # type: ignore
 
-    async def _get_dialog(self, entity: str | int) -> Dialog | None:
-        """Get a dialog object from a specific entity.
-
-        Args:
-            entity (`str | int`): The entity to get the dialog from.
-
-        Returns:
-            `Dialog | None`: The dialog object for the specific entity,
-                or `None` if the entity is not found.
-        """
-
-        input_peer = await self.client.get_input_entity(entity)
-
-        result: Any = await self.client(
-            functions.messages.GetPeerDialogsRequest(
-                peers=[types.InputDialogPeer(peer=input_peer)]
-            )
-        )
-
-        assert isinstance(
-            result, types.messages.PeerDialogs
-        ), f"Expected types.messages.PeerDialogs, got {type(result).__name__}"
-
-        if result and result.dialogs and isinstance(result.dialogs[0], types.Dialog):
-            entities: dict[int, types.User | types.Chat | types.Channel] = {}
-            for x in itertools.chain(result.users, result.chats):
-                if isinstance(x, (types.User | types.Chat | types.Channel)):
-                    entities[x.id] = x
-
-            return Dialog.from_custom_dialog(
-                custom.Dialog(
-                    client=self.client,
-                    dialog=result.dialogs[0],
-                    entities=entities,
-                    message=None,
-                )
-            )
-
-        return None
-
     async def get_messages(
         self,
         entity: str | int,
@@ -315,7 +172,9 @@ class Telegram:
             end_date = end_date.replace(tzinfo=timezone.utc)
 
         peer_id = await self.client.get_peer_id(entity)
-        dialog = await self._get_dialog(entity)
+        __entity = await self.client.get_entity(entity)
+        assert isinstance(__entity, hints.Entity)
+        dialog = Dialog.from_entity(__entity)
 
         if unread:
             if not dialog or dialog.unread_messages_count == 0:
@@ -350,7 +209,9 @@ class Telegram:
                     sender_peer = await self.client.get_peer_id(message.from_id)
                     sender_id = sender_peer
                 except Exception as e:
-                    logger.warning(f"Could not get peer ID for from_id {message.from_id}: {e}")
+                    logger.warning(
+                        f"Could not get peer ID for from_id {message.from_id}: {e}"
+                    )
 
             media = Media.from_message(message)
             message_text: str | None = (
@@ -386,7 +247,8 @@ class Telegram:
         """
         try:
             logger.debug(
-                f"Attempting to download media from message {message_id} in entity {entity}"
+                f"Attempting to download media from message {message_id} \
+                    in entity {entity}"
             )
             # Fetch the specific message
             message = await self.client.get_messages(entity, ids=message_id)  # type: ignore
@@ -438,7 +300,8 @@ class Telegram:
 
         except Exception as e:
             logger.error(
-                f"General error processing media download for message {message_id} in entity "
+                f"General error processing media download for message \
+                    {message_id} in entity "
                 f"{entity}: {e}",
                 exc_info=True,
             )
@@ -451,14 +314,17 @@ class Telegram:
             link (`str`): The link to get the message from.
 
         Returns:
-            `Message | None`: The message from the link, or None if not found or invalid.
+            `Message | None`: The message from the link,
+            or None if not found or invalid.
         """
         try:
             # Parse the link to get the entity and message ID
             parsed_result = parse_telegram_url(link)
 
             if parsed_result is None:
-                logger.warning(f"Could not parse valid entity/message ID from link: {link}")
+                logger.warning(
+                    f"Could not parse valid entity/message ID from link: {link}"
+                )
                 return None
 
             # Unpack the result now that we know it's not None
@@ -479,7 +345,6 @@ class Telegram:
             sender_id: int | None = None
             if message.from_id:
                 try:
-                    # Use get_peer_id for consistency and potential user/channel resolution
                     sender_peer = await self.client.get_peer_id(message.from_id)
                     sender_id = sender_peer
                 except Exception as e:
@@ -497,7 +362,8 @@ class Telegram:
             # Ensure date is valid
             if not isinstance(message.date, datetime):
                 logger.warning(
-                    f"Message {message_id} from link {link} has invalid date: {message.date}"
+                    f"Message {message_id} from link {link} has invalid date: \
+                        {message.date}"
                 )
                 return None
 
@@ -515,9 +381,8 @@ class Telegram:
         ) as e:  # Handle invalid link format specifically from parse_telegram_url
             logger.warning(f"Invalid Telegram link format: {link} - {e}")
             return None
-        except (
-            TypeError
-        ) as e:  # Handle potential errors from parse_telegram_url returning unexpected types
+        except TypeError as e:
+            # Handle potential errors from parse_telegram_url returning unexpected types
             logger.error(f"Error parsing Telegram link {link}: {e}", exc_info=True)
             return None
         except (
@@ -525,3 +390,48 @@ class Telegram:
         ) as e:  # Catch other potential errors (e.g., network issues, permissions)
             logger.error(f"Error fetching message from link {link}: {e}", exc_info=True)
             return None
+
+    async def search_dialogs(self, query: str, limit: int = 10) -> list[Dialog]:
+        """Search for users, groups, and channels globally.
+
+        Args:
+            query (`str`): The search query.
+            limit (`int`, optional): Maximum number of results to return.
+                    Defaults to 10.
+
+        Returns:
+            `list[Dialog]`: A list of Dialog objects representing the search results.
+        """
+        if not query:
+            raise ValueError("Query cannot be empty!")
+
+        response: Any = await self.client(
+            functions.contacts.SearchRequest(
+                q=query,
+                limit=limit,
+            )
+        )
+
+        assert isinstance(response, types.contacts.Found)
+
+        priority: dict[int, int] = {}
+        for i, peer in enumerate(
+            itertools.chain(response.my_results, response.results)
+        ):
+            _id = await self.client.get_peer_id(peer)
+            priority[_id] = i
+
+        result: list[Dialog] = []
+        for x in itertools.chain(response.users, response.chats):
+            if isinstance(x, hints.Entity):
+                try:
+                    dialog = Dialog.from_entity(x)
+                    result.append(dialog)
+                except Exception as e:
+                    logger.warning(f"Failed to get dialog for entity {x.id}: {e}")
+                    continue
+
+        # Sort results based on priority
+        result.sort(key=lambda x: priority.get(x.id, float("inf")))
+
+        return result

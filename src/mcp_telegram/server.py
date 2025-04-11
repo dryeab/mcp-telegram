@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
-from mcp_telegram.types import Contact, Dialog, DownloadedMedia, Message, Messages
+from mcp_telegram.types import Dialog, DownloadedMedia, Message, Messages
 from mcp_telegram.utils import parse_entity
 
 
@@ -25,16 +25,10 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[None]:
         await tg.client.disconnect()  # type: ignore
 
 
-instructions = """
-You are a helpful assistant that can send messages and 
-get messages from Telegram users, groups, and channels.
-"""
-
 tg = Telegram()
 mcp = FastMCP(
     "mcp-telegram",
     lifespan=app_lifespan,
-    instructions=instructions,
 )
 
 
@@ -68,49 +62,25 @@ async def send_message(entity: str, message: str) -> str:
 
 
 @mcp.tool()
-async def search_contacts(query: str | None = None) -> list[Contact]:
-    """Search for contacts in the user's Telegram contacts list.
+async def search_dialogs(query: str, limit: int = 10) -> list[Dialog]:
+    """Search for users, groups, and channels.
 
-    Retrieves the user's contacts and filters them based on the provided query.
-    The query performs a case-insensitive search against the contact's
-    first name, last name, username, and phone number.
-
-    Args:
-        query (`str`, optional):
-            A query string to filter the contacts. If provided, the search
-            will return only contacts where the query string is found within
-            their first name, last name, username, or phone number.
-            If None or empty, all contacts are returned.
-
-    Returns:
-        `list[Contact]`:
-            A list of contacts that match the query including the contact's
-            id, first name, last name, username, and phone number.
-    """
-
-    return await tg.search_contacts(query)
-
-
-@mcp.tool()
-async def search_dialogs(query: str = "") -> list[Dialog]:
-    """Search for dialogs in the user's Telegram dialogs list.
-
-    Retrieves the user's dialogs and filters them based on the provided query.
-    The query performs a case-insensitive search against the dialog's title and username.
+    Retrieves users, groups, and channels and filters them based
+    on the provided query. The query performs a case-insensitive search.
 
     Args:
-        query (`str`, optional):
-            A query string to filter the dialogs. If provided, the search
-            will return only dialogs where the query string is found within
-            the dialog's title or username. If empty, all dialogs are returned.
+        query (`str`): A query string to filter the dialogs.
+            The search will return only dialogs where the query string is
+            found within the dialog's title or username.
+
+        limit (`int`, optional): The maximum number of dialogs to return.
+            Defaults to 10.
 
     Returns:
-        `list[Dialog]`:
-            A list of dialogs that match the query including the dialog's
-            id, title, username, type, and unread messages count.
+        `list[Dialog]`: A list of dialogs that match the query.
     """
 
-    return await tg.search_dialogs(query)
+    return await tg.search_dialogs(query, limit)
 
 
 @mcp.tool()

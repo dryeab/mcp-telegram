@@ -6,22 +6,8 @@ from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel
-from telethon.tl import custom, types  # type: ignore
-
-
-class Contact(BaseModel):
-    """A contact with an entity."""
-
-    id: int
-    """The ID of the contact."""
-    first_name: str | None = None
-    """The first name of the contact."""
-    last_name: str | None = None
-    """The last name of the contact."""
-    username: str | None = None
-    """The username of the contact."""
-    phone: str | None = None
-    """The phone number of the contact."""
+from telethon import hints, types, utils  # type: ignore
+from telethon.tl import custom  # type: ignore
 
 
 class DialogType(Enum):
@@ -34,8 +20,6 @@ class DialogType(Enum):
 
 
 class Dialog(BaseModel):
-    """A dialog with an entity."""
-
     id: int
     """The ID of the dialog."""
     title: str
@@ -50,45 +34,45 @@ class Dialog(BaseModel):
     """The number of unread messages in the dialog."""
 
     @staticmethod
-    def from_custom_dialog(dialog: custom.Dialog) -> "Dialog":
-        """Convert a `telethon.tl.custom.Dialog` object to a `Dialog` object.
+    def get_dialog_type(entity: hints.Entity) -> "DialogType":
+        """Get the type of a dialog from a telethon entity."""
+        if isinstance(entity, types.User):
+            if entity.bot:
+                return DialogType.BOT
+            else:
+                return DialogType.USER
+        elif isinstance(entity, types.Chat):
+            return DialogType.GROUP
+        else:
+            if entity.megagroup:
+                return DialogType.GROUP
+            else:
+                return DialogType.CHANNEL
+
+    @staticmethod
+    def from_entity(entity: hints.Entity) -> "Dialog":
+        """Convert a `telethon.hints.Entity` object to a `Dialog` object.
 
         Args:
-            dialog (`telethon.tl.custom.Dialog`): The custom dialog to convert.
+            entity (`telethon.hints.Entity`): The entity to convert.
 
         Returns:
             `Dialog`: The converted Dialog object.
         """
-        assert isinstance(dialog.id, int) and isinstance(dialog.unread_count, int)  # type: ignore
-        assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))  # type: ignore
 
-        dialog_type: DialogType
-        if dialog.is_user:
-            assert isinstance(dialog.entity, types.User)
-            if dialog.entity.bot:
-                dialog_type = DialogType.BOT
-            else:
-                dialog_type = DialogType.USER
-        elif dialog.is_group:
-            dialog_type = DialogType.GROUP
-        else:
-            dialog_type = DialogType.CHANNEL
-
-        username: str | None = None
-        if isinstance(dialog.entity, (types.User | types.Channel)):
-            username = dialog.entity.username
-
-        phone_number: str | None = None
-        if isinstance(dialog.entity, types.User):
-            phone_number = dialog.entity.phone
+        id: int = utils.get_peer_id(entity)  # type: ignore
+        title = utils.get_display_name(entity)  # type: ignore
+        type: DialogType = Dialog.get_dialog_type(entity)
+        username = entity.username if not isinstance(entity, types.Chat) else None
+        phone_number = entity.phone if isinstance(entity, types.User) else None
 
         return Dialog(
-            id=dialog.id,
-            title=dialog.name,
-            type=dialog_type,
+            id=id,  # type: ignore
+            title=title,
+            type=type,
             username=username,
             phone_number=phone_number,
-            unread_messages_count=dialog.unread_count,
+            unread_messages_count=0,
         )
 
 
@@ -125,7 +109,9 @@ class Media(BaseModel):
                 # Fallback to message ID if no specific media ID is available
                 media_id = message.id
 
-            file_name = message.file.name if isinstance(message.file.name, str) else None
+            file_name = (
+                message.file.name if isinstance(message.file.name, str) else None
+            )
 
             return Media(
                 media_id=media_id,
