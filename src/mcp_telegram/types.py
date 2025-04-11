@@ -140,6 +140,15 @@ class Media(BaseModel):
         return None
 
 
+class DownloadedMedia(BaseModel):
+    """A downloaded media object."""
+
+    path: str
+    """The path to the downloaded media."""
+    media: Media
+    """The media object."""
+
+
 class Message(BaseModel):
     """A single message from an entity."""
 
