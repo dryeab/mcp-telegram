@@ -2,26 +2,27 @@
 Utility functions for the MCP Telegram module.
 """
 
-# pyright: reportMissingTypeStubs=false
-
 import re
 import uuid
 
 from pathlib import Path
 
-from telethon.tl import patched
+from telethon.tl import patched  # type: ignore
 
 
-def parse_entity_id(entity: str) -> int | str:
+def parse_entity(entity: str) -> int | str:
     """
-    Convert a string entity ID to an integer if it represents a number
-    (including negative numbers), otherwise return the original string.
+    Parse a string entity identifier as an integer ID.
+
+    If the string represents a valid integer (potentially negative), it's
+    returned as an `int`. Otherwise, the original string (assumed to be
+    a username or phone number) is returned.
 
     Args:
-        entity (`str`): The entity which could be a numeric ID or a username/handle
+        entity (`str`): The entity (ID, username, phone number, or "me").
 
     Returns:
-        `int | str`: Integer if the input is a valid number, otherwise the original string
+        `int | str`: The parsed integer ID or the original string identifier.
     """
     return int(entity) if entity.lstrip("-").isdigit() else entity
 
@@ -67,11 +68,11 @@ def parse_telegram_url(url: str) -> tuple[str | int, int] | None:
     """Parse a Telegram URL to extract the entity and message ID.
 
     Handles common formats like:
-    - https://t.me/username/123
-    - t.me/username/123
-    - https://telegram.me/username/123
-    - telegram.me/username/123
-    - https://t.me/c/1234567890/123
+    - `https://t.me/username/123`
+    - `t.me/username/123`
+    - `https://telegram.me/username/123`
+    - `telegram.me/username/123`
+    - `https://t.me/c/1234567890/123`
 
     Args:
         url (`str`): The Telegram URL to parse.
@@ -89,7 +90,7 @@ def parse_telegram_url(url: str) -> tuple[str | int, int] | None:
 
     if match:
         try:
-            entity = parse_entity_id(match.group(1))
+            entity = parse_entity(match.group(1))
             message_id = int(match.group(2))
         except ValueError:
             return None

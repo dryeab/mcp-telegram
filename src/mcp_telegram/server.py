@@ -6,7 +6,7 @@ from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
 from mcp_telegram.types import Contact, Dialog, DownloadedMedia, Message, Messages
-from mcp_telegram.utils import parse_entity_id
+from mcp_telegram.utils import parse_entity
 
 
 @asynccontextmanager
@@ -59,7 +59,7 @@ async def send_message(entity: str, message: str) -> str:
     """
 
     try:
-        await tg.send_message(parse_entity_id(entity), message)
+        await tg.send_message(parse_entity(entity), message)
         return "Message sent"
     except Exception as e:
         return f"Error sending message: {e}"
@@ -128,7 +128,7 @@ async def get_draft(entity: str) -> str:
             The draft message for the specific entity.
     """
 
-    return await tg.get_draft(parse_entity_id(entity))
+    return await tg.get_draft(parse_entity(entity))
 
 
 @mcp.tool()
@@ -152,7 +152,7 @@ async def set_draft(entity: str, message: str) -> str:
     """
 
     try:
-        if await tg.set_draft(parse_entity_id(entity), message):
+        if await tg.set_draft(parse_entity(entity), message):
             return "Draft saved"
         return "Draft not saved"
     except Exception as e:
@@ -204,7 +204,7 @@ async def get_messages(
     """
 
     return await tg.get_messages(
-        parse_entity_id(entity),
+        parse_entity(entity),
         limit,
         start_date,
         end_date,
@@ -234,7 +234,7 @@ async def media_download(entity: str, message_id: int) -> DownloadedMedia | None
             of the downloaded file if successful, or None otherwise.
             The object has `path` (str) and `media` (Media) attributes.
     """
-    return await tg.download_media(parse_entity_id(entity), message_id)
+    return await tg.download_media(parse_entity(entity), message_id)
 
 
 @mcp.tool()
