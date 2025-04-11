@@ -86,14 +86,20 @@ class Telegram:
 
         return self._client
 
-    async def send_message(self, entity: str | int, message: str) -> None:
+    async def send_message(
+        self, entity: str | int, message: str, reply_to: int = 0
+    ) -> None:
         """Send a message to a Telegram user, group, or channel.
 
         Args:
             entity (`str | int`): The recipient of the message.
             message (`str`): The message to send.
+            reply_to (`int`, optional): The message ID to reply to.
         """
-        await self.client.send_message(entity, message)
+        if reply_to:
+            await self.client.send_message(entity, message, reply_to=reply_to)
+        else:
+            await self.client.send_message(entity, message)
 
     async def get_draft(self, entity: str | int) -> str:
         """Get the draft message from a specific entity.

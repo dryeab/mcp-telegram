@@ -33,7 +33,7 @@ mcp = FastMCP(
 
 
 @mcp.tool()
-async def send_message(entity: str, message: str) -> str:
+async def send_message(entity: str, message: str, reply_to: int = 0) -> str:
     """Send a message to a Telegram user, group, or channel.
 
     It allows sending text messages to any Telegram entity identified by `entity`.
@@ -49,13 +49,16 @@ async def send_message(entity: str, message: str) -> str:
             The text message to be sent. The message supports Markdown formatting
             including **bold**, __italic__, `monospace`, and [URL](links).
 
+        reply_to (`int`, optional):
+            The message ID to reply to.
+
     Returns:
         `str`:
             A success message if sent, or an error message if failed.
     """
 
     try:
-        await tg.send_message(parse_entity(entity), message)
+        await tg.send_message(parse_entity(entity), message, reply_to)
         return "Message sent"
     except Exception as e:
         return f"Error sending message: {e}"
