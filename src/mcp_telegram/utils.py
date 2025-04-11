@@ -4,6 +4,7 @@ Utility functions for the MCP Telegram module.
 
 # pyright: reportMissingTypeStubs=false
 
+import re
 import uuid
 
 from pathlib import Path
@@ -60,3 +61,39 @@ def get_unique_filename(message: patched.Message) -> str:
             filename = fallback_name
 
     return filename
+
+
+def parse_telegram_url(url: str) -> tuple[str | int, int] | None:
+    """Parse a Telegram URL to extract the entity and message ID.
+
+    Handles common formats like:
+    - https://t.me/username/123
+    - t.me/username/123
+    - https://telegram.me/username/123
+    - telegram.me/username/123
+    - https://t.me/c/1234567890/123
+
+    Args:
+        url (`str`): The Telegram URL to parse.
+
+    Returns:
+        `tuple[str | int, int] | None`: A tuple containing the entity
+                                      (username string or channel_id integer
+                                      in -100... format) and the message ID integer,
+                                      or None if the URL format is not recognized.
+    """
+    # Regex to capture the entity (username or channel_id) and message ID
+    pattern = r"(?:https?://)?t(?:elegram)?\.me/c/(\d+)/(\d+)"
+
+    match = re.match(pattern, url)
+
+    if match:
+        try:
+            entity = parse_entity_id(match.group(1))
+            message_id = int(match.group(2))
+        except ValueError:
+            return None
+
+        return entity, message_id
+
+    return None
