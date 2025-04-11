@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
-from mcp_telegram.types import Contact, Dialog, Messages
+from mcp_telegram.types import Contact, Dialog, DownloadedMedia, Messages
 from mcp_telegram.utils import parse_entity_id
 
 
@@ -213,24 +213,25 @@ async def get_messages(
     )
 
 
-@mcp.resource(uri="media://{entity}/{message_id}")
-async def media_download(entity: str, message_id: int) -> bytes | None:
-    """Download media from a specific entity.
+@mcp.tool()
+async def media_download(entity: str, message_id: int) -> DownloadedMedia | None:
+    """Download media from a specific message to a unique local file.
 
     Retrieves media from an entity specified by username, chat_id,
-    phone number, or 'me'.
+    phone number, or 'me' and saves it to a local directory with a unique name.
 
     Args:
         entity (`str`):
-            The identifier of the entity to get media from.
+            The identifier of the entity where the message exists.
             This can be a Telegram chat ID, a username, a phone number, or 'me'.
 
         message_id (`int`):
-            The ID of the message to download media from.
+            The ID of the message containing the media to download.
 
     Returns:
-        `bytes | None`:
-            The media bytes if found, or None if not found.
+        `DownloadedMedia | None`:
+            An object containing the absolute path and media details
+            of the downloaded file if successful, or None otherwise.
+            The object has `path` (str) and `media` (Media) attributes.
     """
-
     return await tg.download_media(parse_entity_id(entity), message_id)

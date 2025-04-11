@@ -7,6 +7,7 @@ import itertools
 import logging
 
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 from pydantic import SecretStr
@@ -18,10 +19,12 @@ from xdg_base_dirs import xdg_state_home
 from mcp_telegram.types import (
     Contact,
     Dialog,
+    DownloadedMedia,
     Media,
     Message,
     Messages,
 )
+from mcp_telegram.utils import get_unique_filename
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +42,9 @@ class Telegram:
     def __init__(self):
         self._state_dir = xdg_state_home() / "mcp-telegram"
         self._state_dir.mkdir(parents=True, exist_ok=True)
+
+        self._downloads_dir = self._state_dir / "downloads"
+        self._downloads_dir.mkdir(parents=True, exist_ok=True)
 
         self._client: TelegramClient | None = None
 
@@ -365,17 +371,19 @@ class Telegram:
 
         return Messages(messages=results, dialog=dialog)
 
-    async def download_media(self, entity: str | int, message_id: int) -> bytes | None:
-        """Download media attached to a specific message.
+    async def download_media(
+        self, entity: str | int, message_id: int
+    ) -> DownloadedMedia | None:
+        """Download media attached to a specific message to a unique local file.
 
         Args:
             entity (`str | int`): The chat/user where the message exists.
             message_id (`int`): The ID of the message containing the media.
 
         Returns:
-            `bytes | None`: The downloaded media content as bytes,
-                           or None if the message/media is not found
-                           or download fails.
+            `DownloadedMedia | None`: An object containing the absolute path
+                                     and media details of the downloaded file,
+                                     or None if download fails.
         """
         try:
             logger.debug(
@@ -390,43 +398,49 @@ class Telegram:
                 )
                 return None
 
-            if not message.media:
+            media = Media.from_message(message)
+            if not media:
                 logger.warning(
-                    f"Message {message_id} in entity {entity} does not contain media."
+                    f"Message {message_id} in entity {entity} does not contain \
+                        downloadable media."
                 )
                 return None
 
-            # Attempt to download the media content as bytes
-            # Handle potential FileReferenceExpiredError by re-fetching
+            filename = get_unique_filename(message)
+
+            filepath = self._downloads_dir / filename
+
+            # Attempt to download the media to the specified file path
             try:
-                media_bytes = await message.download_media(bytes)  # type: ignore
+                # download_media returns the path where the file was saved
+                downloaded_path = await message.download_media(file=filepath)  # type: ignore
             except Exception as e:
                 logger.error(
-                    f"Error downloading media for message {message_id} \
-                        in entity {entity}: {e}",
+                    f"Error during media download for message {message_id} "
+                    f"in entity {entity}: {e}",
                     exc_info=True,
                 )
                 return None
 
-            if isinstance(media_bytes, bytes):
+            if downloaded_path and isinstance(downloaded_path, str):
+                # Make path absolute for clarity if it's not already
+                absolute_path = str(Path(downloaded_path).resolve())
                 logger.info(
                     f"Successfully downloaded media for message {message_id} \
-                        ({len(media_bytes)} bytes)."
+                        to {absolute_path}."
                 )
-                return media_bytes
+                return DownloadedMedia(path=absolute_path, media=media)
             else:
-                # download_media might return the file path if download fails
-                # in certain ways or if bytes isn't supported?
                 logger.error(
-                    f"Failed to download media for message {message_id} as bytes. \
-                        Received type: {type(media_bytes)}"
-                )  # type: ignore
+                    f"Failed to download media for message {message_id}. "
+                    f"download_media returned: {downloaded_path}"
+                )
                 return None
 
         except Exception as e:
             logger.error(
-                f"Error downloading media for message {message_id} in entity \
-                    {entity}: {e}",
+                f"General error processing media download for message {message_id} in entity "
+                f"{entity}: {e}",
                 exc_info=True,
             )
             return None
