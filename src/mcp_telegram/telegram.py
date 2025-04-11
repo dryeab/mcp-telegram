@@ -1,8 +1,5 @@
 """Telegram client wrapper."""
 
-# pyright: reportMissingTypeStubs=false
-# pyright: reportUnknownMemberType=false
-
 import itertools
 import logging
 
@@ -12,8 +9,8 @@ from typing import Any
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings
-from telethon import TelegramClient
-from telethon.tl import custom, functions, patched, types
+from telethon import TelegramClient  # type: ignore
+from telethon.tl import custom, functions, patched, types  # type: ignore
 from xdg_base_dirs import xdg_state_home
 
 from mcp_telegram.types import (
@@ -182,7 +179,7 @@ class Telegram:
         results: list[Dialog] = []
 
         for dialog in dialogs:
-            assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))
+            assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))  # type: ignore
 
             username: str | None = None
             if isinstance(dialog.entity, types.User | types.Channel):
@@ -216,7 +213,7 @@ class Telegram:
             draft, custom.Draft
         ), f"Expected custom.Draft, got {type(draft).__name__}"
 
-        if isinstance(draft.text, str):
+        if isinstance(draft.text, str):  # type: ignore
             return draft.text
 
         return ""
@@ -356,7 +353,9 @@ class Telegram:
                     logger.warning(f"Could not get peer ID for from_id {message.from_id}: {e}")
 
             media = Media.from_message(message)
-            message_text: str | None = message.text if isinstance(message.text, str) else None
+            message_text: str | None = (
+                message.text if isinstance(message.text, str) else None  # type: ignore
+            )
 
             results.append(
                 Message(
@@ -390,7 +389,7 @@ class Telegram:
                 f"Attempting to download media from message {message_id} in entity {entity}"
             )
             # Fetch the specific message
-            message = await self.client.get_messages(entity, ids=message_id)
+            message = await self.client.get_messages(entity, ids=message_id)  # type: ignore
 
             if not message or not isinstance(message, patched.Message):
                 logger.warning(
@@ -467,7 +466,7 @@ class Telegram:
 
             # Fetch the specific message using the parsed entity and ID
             # Use client.get_messages with ids parameter
-            message = await self.client.get_messages(entity, ids=message_id)
+            message = await self.client.get_messages(entity, ids=message_id)  # type: ignore
 
             if not message or not isinstance(message, patched.Message):
                 logger.warning(
@@ -491,7 +490,9 @@ class Telegram:
                     # Continue without sender_id if resolution fails
 
             media = Media.from_message(message)
-            message_text: str | None = message.text if isinstance(message.text, str) else None
+            message_text: str | None = (
+                message.text if isinstance(message.text, str) else None  # type: ignore
+            )
 
             # Ensure date is valid
             if not isinstance(message.date, datetime):
