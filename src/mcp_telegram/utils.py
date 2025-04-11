@@ -28,7 +28,7 @@ def parse_entity(entity: str) -> int | str:
 
 
 def get_unique_filename(message: patched.Message) -> str:
-    """Generate a unique filename for a message.
+    """Generate a unique filename for a message media.
 
     Args:
         message (`patched.Message`): The message to generate a filename for.
@@ -65,7 +65,7 @@ def get_unique_filename(message: patched.Message) -> str:
 
 
 def parse_telegram_url(url: str) -> tuple[str | int, int] | None:
-    """Parse a Telegram URL to extract the entity and message ID.
+    """Parse a Telegram message URL to extract the entity and message ID.
 
     Handles common formats like:
     - `https://t.me/username/123`
@@ -92,7 +92,7 @@ def parse_telegram_url(url: str) -> tuple[str | int, int] | None:
         try:
             entity = parse_entity(match.group(1))
             message_id = int(match.group(2))
-        except ValueError:
+        except Exception:
             return None
 
         return entity, message_id
