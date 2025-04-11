@@ -3,6 +3,8 @@
 # pyright: reportMissingTypeStubs=false
 # pyright: reportUnknownMemberType=false
 
+import typing
+
 from datetime import datetime
 from enum import Enum
 
@@ -10,28 +12,45 @@ from pydantic import BaseModel
 from telethon.tl import custom, types
 
 
+class Contact(BaseModel):
+    """A contact with an entity."""
+
+    id: int
+    """The ID of the contact."""
+    first_name: str | None = None
+    """The first name of the contact."""
+    last_name: str | None = None
+    """The last name of the contact."""
+    username: str | None = None
+    """The username of the contact."""
+    phone: str | None = None
+    """The phone number of the contact."""
+
+
 class DialogType(Enum):
+    """The type of a dialog."""
+
     USER = "user"
     GROUP = "group"
     CHANNEL = "channel"
     BOT = "bot"
 
 
-class Contact(BaseModel):
-    id: int
-    first_name: str | None = None
-    last_name: str | None = None
-    username: str | None = None
-    phone: str | None = None
-
-
 class Dialog(BaseModel):
+    """A dialog with an entity."""
+
     id: int
+    """The ID of the dialog."""
     title: str
+    """The title of the dialog."""
     username: str | None = None
+    """The username of the dialog."""
     phone_number: str | None = None
+    """The phone number of the dialog."""
     type: DialogType
+    """The type of the dialog."""
     unread_messages_count: int
+    """The number of unread messages in the dialog."""
 
     @staticmethod
     def from_custom_dialog(dialog: custom.Dialog) -> "Dialog":
@@ -76,9 +95,72 @@ class Dialog(BaseModel):
         )
 
 
+class Media(BaseModel):
+    """A media object."""
+
+    media_id: int
+    """The ID of the media."""
+    mime_type: str | None = None
+    """The MIME type of the media."""
+    file_name: str | None = None
+    """The name of the file."""
+    file_size: int | None = None
+    """The size of the file."""
+
+    @staticmethod
+    def from_message(message: custom.Message) -> typing.Union["Media", None]:
+        """Convert a `telethon.tl.custom.Message` object to a `Media` object.
+
+        Args:
+            message (`telethon.tl.custom.Message`): The message to convert.
+
+        Returns:
+            `Media`: The converted Media object.
+        """
+
+        if message.media and message.file:
+            media_id: int
+            if message.photo:
+                media_id = message.photo.id
+            elif message.document:
+                media_id = message.document.id
+            else:
+                # Fallback to message ID if no specific media ID is available
+                media_id = message.id
+
+            file_name = message.file.name if isinstance(message.file.name, str) else None
+
+            return Media(
+                media_id=media_id,
+                mime_type=message.file.mime_type,
+                file_name=file_name,
+                file_size=message.file.size,
+            )
+
+        return None
+
+
 class Message(BaseModel):
+    """A single message from an entity."""
+
     message_id: int
+    """The ID of the message."""
     sender_id: int | None = None
+    """The ID of the user who sent the message."""
     message: str | None = None
+    """The message text."""
     outgoing: bool
+    """Whether the message is outgoing."""
     date: datetime | None = None
+    """The date and time the message was sent."""
+    media: Media | None = None
+    """The media associated with the message."""
+
+
+class Messages(BaseModel):
+    """A list of messages from an entity and the dialog the messages belong to."""
+
+    messages: list[Message]
+    """The list of messages."""
+    dialog: Dialog | None = None
+    """The dialog the messages belong to."""
