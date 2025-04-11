@@ -24,7 +24,7 @@ from mcp_telegram.types import (
     Message,
     Messages,
 )
-from mcp_telegram.utils import get_unique_filename
+from mcp_telegram.utils import get_unique_filename, parse_telegram_url
 
 logger = logging.getLogger(__name__)
 
@@ -443,4 +443,84 @@ class Telegram:
                 f"{entity}: {e}",
                 exc_info=True,
             )
+            return None
+
+    async def message_from_link(self, link: str) -> Message | None:
+        """Get a message from a link.
+
+        Args:
+            link (`str`): The link to get the message from.
+
+        Returns:
+            `Message | None`: The message from the link, or None if not found or invalid.
+        """
+        try:
+            # Parse the link to get the entity and message ID
+            parsed_result = parse_telegram_url(link)
+
+            if parsed_result is None:
+                logger.warning(f"Could not parse valid entity/message ID from link: {link}")
+                return None
+
+            # Unpack the result now that we know it's not None
+            entity, message_id = parsed_result
+
+            # Fetch the specific message using the parsed entity and ID
+            # Use client.get_messages with ids parameter
+            message = await self.client.get_messages(entity, ids=message_id)
+
+            if not message or not isinstance(message, patched.Message):
+                logger.warning(
+                    f"Could not retrieve message {message_id} from entity {entity} \
+                        (parsed from link: {link})"
+                )
+                return None
+
+            # Construct the Message object, similar to get_messages
+            sender_id: int | None = None
+            if message.from_id:
+                try:
+                    # Use get_peer_id for consistency and potential user/channel resolution
+                    sender_peer = await self.client.get_peer_id(message.from_id)
+                    sender_id = sender_peer
+                except Exception as e:
+                    logger.warning(
+                        f"Could not get peer ID for from_id {message.from_id} "
+                        f"(message {message_id} from link {link}): {e}"
+                    )
+                    # Continue without sender_id if resolution fails
+
+            media = Media.from_message(message)
+            message_text: str | None = message.text if isinstance(message.text, str) else None
+
+            # Ensure date is valid
+            if not isinstance(message.date, datetime):
+                logger.warning(
+                    f"Message {message_id} from link {link} has invalid date: {message.date}"
+                )
+                return None
+
+            return Message(
+                message_id=message.id,
+                sender_id=sender_id,
+                message=message_text,
+                outgoing=message.out,
+                date=message.date,
+                media=media,
+            )
+
+        except (
+            ValueError
+        ) as e:  # Handle invalid link format specifically from parse_telegram_url
+            logger.warning(f"Invalid Telegram link format: {link} - {e}")
+            return None
+        except (
+            TypeError
+        ) as e:  # Handle potential errors from parse_telegram_url returning unexpected types
+            logger.error(f"Error parsing Telegram link {link}: {e}", exc_info=True)
+            return None
+        except (
+            Exception
+        ) as e:  # Catch other potential errors (e.g., network issues, permissions)
+            logger.error(f"Error fetching message from link {link}: {e}", exc_info=True)
             return None

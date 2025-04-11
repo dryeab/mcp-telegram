@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
-from mcp_telegram.types import Contact, Dialog, DownloadedMedia, Messages
+from mcp_telegram.types import Contact, Dialog, DownloadedMedia, Message, Messages
 from mcp_telegram.utils import parse_entity_id
 
 
@@ -235,3 +235,20 @@ async def media_download(entity: str, message_id: int) -> DownloadedMedia | None
             The object has `path` (str) and `media` (Media) attributes.
     """
     return await tg.download_media(parse_entity_id(entity), message_id)
+
+
+@mcp.tool()
+async def message_from_link(link: str) -> Message | None:
+    """Get a message from a link.
+
+    Retrieves a message from a link.
+
+    Args:
+        link (`str`):
+            The link to the message.
+
+    Returns:
+        `Message | None`:
+            The message from the link if successful, or None otherwise.
+    """
+    return await tg.message_from_link(link)
