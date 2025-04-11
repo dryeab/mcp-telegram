@@ -1,15 +1,12 @@
 """Types for MCP Telegram Server"""
 
-# pyright: reportMissingTypeStubs=false
-# pyright: reportUnknownMemberType=false
-
 import typing
 
 from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel
-from telethon.tl import custom, types
+from telethon.tl import custom, types  # type: ignore
 
 
 class Contact(BaseModel):
@@ -62,8 +59,8 @@ class Dialog(BaseModel):
         Returns:
             `Dialog`: The converted Dialog object.
         """
-        assert isinstance(dialog.id, int) and isinstance(dialog.unread_count, int)
-        assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))
+        assert isinstance(dialog.id, int) and isinstance(dialog.unread_count, int)  # type: ignore
+        assert isinstance(dialog.entity, (types.User | types.Chat | types.Channel))  # type: ignore
 
         dialog_type: DialogType
         if dialog.is_user:
