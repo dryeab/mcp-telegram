@@ -20,7 +20,9 @@ from rich.table import Table
 from mcp_telegram.server import mcp
 from mcp_telegram.telegram import Telegram
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 app = typer.Typer(
     name="mcp-telegram",
@@ -66,7 +68,8 @@ def version() -> None:
     except importlib.metadata.PackageNotFoundError:
         console.print(
             Panel.fit(
-                "[bold red]MCP Telegram version unknown (package not installed)[/bold red]",
+                "[bold red]MCP Telegram version unknown (package not installed)\
+                    [/bold red]",
                 title="❌ Error",
                 border_style="red",
             )
@@ -113,7 +116,8 @@ async def login() -> None:
 
         phone = console.input(
             "\n[bold cyan]📱 Phone Number[/bold cyan]\n"
-            "[dim]Enter your phone number in international format (e.g., +1234567890)[/dim]\n"
+            "[dim]Enter your phone number in international format \
+                (e.g., +1234567890)[/dim]\n"
             "> "
         )
 
@@ -121,7 +125,9 @@ async def login() -> None:
 
         with console.status("[bold green]Connecting to Telegram...", spinner="dots"):
             await tg.client.connect()
-            console.print("\n[bold green]✓[/bold green] [dim]Connected to Telegram[/dim]")
+            console.print(
+                "\n[bold green]✓[/bold green] [dim]Connected to Telegram[/dim]"
+            )
 
         def code_callback() -> str:
             return console.input(
@@ -159,7 +165,9 @@ async def login() -> None:
         )
 
     except ValueError:
-        console.print("\n[bold red]✗ Error:[/bold red] API ID must be a number", style="red")
+        console.print(
+            "\n[bold red]✗ Error:[/bold red] API ID must be a number", style="red"
+        )
         sys.exit(1)
     except Exception as e:
         console.print(f"\n[bold red]✗ Error:[/bold red] {str(e)}", style="red")
