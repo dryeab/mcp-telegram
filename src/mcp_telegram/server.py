@@ -22,7 +22,7 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[None]:
         await tg.client.connect()
         yield
     finally:
-        tg.client.disconnect()
+        await tg.client.disconnect()  # type: ignore
 
 
 instructions = """
