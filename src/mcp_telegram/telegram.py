@@ -15,7 +15,13 @@ from telethon import TelegramClient
 from telethon.tl import custom, functions, patched, types
 from xdg_base_dirs import xdg_state_home
 
-from mcp_telegram.types import Contact, Dialog, Message
+from mcp_telegram.types import (
+    Contact,
+    Dialog,
+    Media,
+    Message,
+    Messages,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -277,7 +283,7 @@ class Telegram:
         end_date: datetime = datetime.now(timezone.utc),
         unread: bool = False,
         mark_as_read: bool = False,
-    ) -> list[Message]:
+    ) -> Messages:
         """Get messages from a specific entity.
 
         Args:
@@ -306,11 +312,11 @@ class Telegram:
             end_date = end_date.replace(tzinfo=timezone.utc)
 
         peer_id = await self.client.get_peer_id(entity)
+        dialog = await self._get_dialog(entity)
 
         if unread:
-            dialog = await self._get_dialog(entity)
             if not dialog or dialog.unread_messages_count == 0:
-                return []
+                return Messages(messages=[], dialog=dialog)
             limit = min(limit, dialog.unread_messages_count)
 
         results: list[Message] = []
@@ -318,8 +324,7 @@ class Telegram:
             peer_id,
             offset_date=end_date,  # fetching messages older than end_date
         ):
-            if not isinstance(message, patched.Message):
-                continue
+            assert isinstance(message, patched.Message)
 
             if message.date is None:
                 continue
@@ -344,15 +349,84 @@ class Telegram:
                 except Exception as e:
                     logger.warning(f"Could not get peer ID for from_id {message.from_id}: {e}")
 
-            if isinstance(message.text, str):
-                results.append(
-                    Message(
-                        message_id=message.id,
-                        sender_id=sender_id,
-                        message=message.text,
-                        outgoing=message.out,
-                        date=message.date,
-                    )
-                )
+            media = Media.from_message(message)
+            message_text: str | None = message.text if isinstance(message.text, str) else None
 
-        return results
+            results.append(
+                Message(
+                    message_id=message.id,
+                    sender_id=sender_id,
+                    message=message_text,
+                    outgoing=message.out,
+                    date=message.date,
+                    media=media,
+                )
+            )
+
+        return Messages(messages=results, dialog=dialog)
+
+    async def download_media(self, entity: str | int, message_id: int) -> bytes | None:
+        """Download media attached to a specific message.
+
+        Args:
+            entity (`str | int`): The chat/user where the message exists.
+            message_id (`int`): The ID of the message containing the media.
+
+        Returns:
+            `bytes | None`: The downloaded media content as bytes,
+                           or None if the message/media is not found
+                           or download fails.
+        """
+        try:
+            logger.debug(
+                f"Attempting to download media from message {message_id} in entity {entity}"
+            )
+            # Fetch the specific message
+            message = await self.client.get_messages(entity, ids=message_id)
+
+            if not message or not isinstance(message, patched.Message):
+                logger.warning(
+                    f"Message {message_id} not found or invalid in entity {entity}."
+                )
+                return None
+
+            if not message.media:
+                logger.warning(
+                    f"Message {message_id} in entity {entity} does not contain media."
+                )
+                return None
+
+            # Attempt to download the media content as bytes
+            # Handle potential FileReferenceExpiredError by re-fetching
+            try:
+                media_bytes = await message.download_media(bytes)  # type: ignore
+            except Exception as e:
+                logger.error(
+                    f"Error downloading media for message {message_id} \
+                        in entity {entity}: {e}",
+                    exc_info=True,
+                )
+                return None
+
+            if isinstance(media_bytes, bytes):
+                logger.info(
+                    f"Successfully downloaded media for message {message_id} \
+                        ({len(media_bytes)} bytes)."
+                )
+                return media_bytes
+            else:
+                # download_media might return the file path if download fails
+                # in certain ways or if bytes isn't supported?
+                logger.error(
+                    f"Failed to download media for message {message_id} as bytes. \
+                        Received type: {type(media_bytes)}"
+                )  # type: ignore
+                return None
+
+        except Exception as e:
+            logger.error(
+                f"Error downloading media for message {message_id} in entity \
+                    {entity}: {e}",
+                exc_info=True,
+            )
+            return None

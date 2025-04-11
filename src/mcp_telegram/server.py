@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
-from mcp_telegram.types import Contact, Dialog, Message
+from mcp_telegram.types import Contact, Dialog, Messages
 from mcp_telegram.utils import parse_entity_id
 
 
@@ -167,7 +167,7 @@ async def get_messages(
     end_date: datetime = datetime.now(timezone.utc),
     unread: bool = False,
     mark_as_read: bool = False,
-) -> list[Message]:
+) -> Messages:
     """Get messages from a specific entity.
 
     Retrieves messages from an entity specified by username, chat_id,
@@ -199,8 +199,8 @@ async def get_messages(
             Defaults to False.
 
     Returns:
-        `list[Message]`:
-            A list of messages from the entity.
+        `Messages`:
+            A list of messages from the entity and the dialog the messages belong to.
     """
 
     return await tg.get_messages(
@@ -211,3 +211,26 @@ async def get_messages(
         unread,
         mark_as_read,
     )
+
+
+@mcp.resource(uri="media://{entity}/{message_id}")
+async def media_download(entity: str, message_id: int) -> bytes | None:
+    """Download media from a specific entity.
+
+    Retrieves media from an entity specified by username, chat_id,
+    phone number, or 'me'.
+
+    Args:
+        entity (`str`):
+            The identifier of the entity to get media from.
+            This can be a Telegram chat ID, a username, a phone number, or 'me'.
+
+        message_id (`int`):
+            The ID of the message to download media from.
+
+    Returns:
+        `bytes | None`:
+            The media bytes if found, or None if not found.
+    """
+
+    return await tg.download_media(parse_entity_id(entity), message_id)
