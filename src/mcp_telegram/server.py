@@ -6,6 +6,7 @@ from mcp.server.fastmcp import FastMCP
 
 from mcp_telegram.telegram import Telegram
 from mcp_telegram.types import Contact, Dialog, Message
+from mcp_telegram.utils import parse_entity_id
 
 
 @asynccontextmanager
@@ -36,13 +37,13 @@ mcp = FastMCP(
 
 
 @mcp.tool()
-async def send_message(recipient: str, message: str) -> str:
+async def send_message(entity: str, message: str) -> str:
     """Send a message to a Telegram user, group, or channel.
 
-    It allows sending text messages to any Telegram entity identified by `recipient`.
+    It allows sending text messages to any Telegram entity identified by `entity`.
 
     Args:
-        recipient (`str`):
+        entity (`str`):
             The identifier of where to send the message. This can be a Telegram
             chat ID, a username, a phone number (in format '+1234567890'), or a
             group/channel username. The special value "me" can be used to send
@@ -58,7 +59,7 @@ async def send_message(recipient: str, message: str) -> str:
     """
 
     try:
-        await tg.send_message(recipient, message)
+        await tg.send_message(parse_entity_id(entity), message)
         return "Message sent"
     except Exception as e:
         return f"Error sending message: {e}"
@@ -127,7 +128,7 @@ async def get_draft(entity: str) -> str:
             The draft message for the specific entity.
     """
 
-    return await tg.get_draft(entity)
+    return await tg.get_draft(parse_entity_id(entity))
 
 
 @mcp.tool()
@@ -151,7 +152,7 @@ async def set_draft(entity: str, message: str) -> str:
     """
 
     try:
-        if await tg.set_draft(entity, message):
+        if await tg.set_draft(parse_entity_id(entity), message):
             return "Draft saved"
         return "Draft not saved"
     except Exception as e:
@@ -203,7 +204,7 @@ async def get_messages(
     """
 
     return await tg.get_messages(
-        int(entity) if entity.lstrip("-").isdigit() else entity,
+        parse_entity_id(entity),
         limit,
         start_date,
         end_date,

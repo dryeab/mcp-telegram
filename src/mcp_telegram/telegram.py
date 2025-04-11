@@ -77,31 +77,14 @@ class Telegram:
 
         return self._client
 
-    async def send_message(self, recipient: str, message: str) -> None:
+    async def send_message(self, entity: str | int, message: str) -> None:
         """Send a message to a Telegram user, group, or channel.
 
         Args:
-            recipient (`str`): The recipient of the message.
+            entity (`str | int`): The recipient of the message.
             message (`str`): The message to send.
         """
-        # If recipient is a string of digits, it is a chat id. Cast it to an integer.
-        await self.client.send_message(
-            int(recipient) if recipient.lstrip("-").isdigit() else recipient, message
-        )
-
-    async def _list_contacts(self) -> types.contacts.Contacts:
-        """List all contacts in the user's Telegram contacts list.
-
-        Returns:
-            `types.contacts.Contacts`: The contacts in the user's Telegram contacts list.
-        """
-        contacts: Any = await self.client(functions.contacts.GetContactsRequest(hash=0))
-
-        assert isinstance(
-            contacts, types.contacts.Contacts
-        ), f"Expected types.contacts.Contacts, got {type(contacts).__name__}"
-
-        return contacts
+        await self.client.send_message(entity, message)
 
     async def search_contacts(self, query: str | None = None) -> list[Contact]:
         """Search for contacts in the user's Telegram contacts list.
@@ -115,7 +98,11 @@ class Telegram:
             `list[Contact]`: A list of contacts that match the query.
         """
 
-        contacts = await self._list_contacts()
+        contacts: Any = await self.client(functions.contacts.GetContactsRequest(hash=0))
+
+        assert isinstance(
+            contacts, types.contacts.Contacts
+        ), f"Expected types.contacts.Contacts, got {type(contacts).__name__}"
 
         contact_ids = {contact.user_id for contact in contacts.contacts}
         contact_users = [
@@ -161,14 +148,6 @@ class Telegram:
 
         return results
 
-    async def _list_dialogs(self) -> list[custom.Dialog]:
-        """List all dialogs in the user's Telegram dialogs list.
-
-        Returns:
-            `list[custom.Dialog]`: A list of dialogs in the user's Telegram dialogs list.
-        """
-        return await self.client.iter_dialogs().collect()
-
     async def search_dialogs(self, query: str) -> list[Dialog]:
         """Search for dialogs in the user's Telegram dialogs list.
 
@@ -182,7 +161,11 @@ class Telegram:
             `list[Dialog]`: A list of dialogs that match the query.
         """
 
-        dialogs = await self._list_dialogs()
+        dialogs = [
+            dialog
+            for dialog in await self.client.iter_dialogs().collect()  # type: ignore
+            if isinstance(dialog, custom.Dialog)
+        ]
 
         results: list[Dialog] = []
 
@@ -206,19 +189,16 @@ class Telegram:
 
         return results
 
-    async def get_draft(self, entity: str) -> str:
+    async def get_draft(self, entity: str | int) -> str:
         """Get the draft message from a specific entity.
 
         Args:
-            entity (`str`): The identifier of the entity to get the draft message from.
+            entity (`str | int`): The identifier of the entity.
 
         Returns:
             `str`: The draft message from the specific entity.
         """
-
-        draft = await self.client.get_drafts(
-            int(entity) if entity.lstrip("-").isdigit() else entity
-        )
+        draft = await self.client.get_drafts(entity)
 
         assert isinstance(
             draft, custom.Draft
@@ -229,24 +209,19 @@ class Telegram:
 
         return ""
 
-    async def set_draft(self, entity: str, message: str) -> Any:
+    async def set_draft(self, entity: str | int, message: str) -> Any:
         """Set a draft message for a specific entity.
 
         Args:
-            entity (`str`): The identifier of the entity to save the draft message for.
+            entity (`str | int`): The identifier of the entity.
             message (`str`): The message to save as a draft.
 
         Returns:
             `Any`: The result of the `set_message` method.
         """
 
-        target_entity_peer_id = (
-            int(entity)
-            if entity.lstrip("-").isdigit()
-            else (await self.client.get_peer_id(entity))
-        )
-
-        draft = await self.client.get_drafts(target_entity_peer_id)
+        peer_id = await self.client.get_peer_id(entity)
+        draft = await self.client.get_drafts(peer_id)
 
         assert isinstance(
             draft, custom.Draft
