@@ -52,7 +52,7 @@ lines-between-types = 1
 order-by-type = false 
 
 [tool.ruff]
-line-length = 95
+line-length = 88
 target-version = "py310"
 
 [project.urls]
