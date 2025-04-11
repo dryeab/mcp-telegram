@@ -11,6 +11,7 @@ maintainers = [
 keywords = ["git", "mcp", "llm", "automation", "telegram"]
 license = { text = "MIT" }
 dependencies = [
+    "cryptg>=0.5.0.post0",
     "mcp[cli]>=1.6.0",
     "pydantic>=2.11.1",
     "pydantic-settings>=2.8.1",
