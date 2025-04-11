@@ -1,3 +1,5 @@
+"""MCP Telegram Server."""
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone

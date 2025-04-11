@@ -1,6 +1,4 @@
-"""
-Utility functions for the MCP Telegram module.
-"""
+"""Utility functions for the MCP Telegram module."""
 
 import re
 import uuid
