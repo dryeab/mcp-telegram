@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 
 from mcp.server.fastmcp import FastMCP
 
@@ -160,7 +161,9 @@ async def set_draft(entity: str, message: str) -> str:
 @mcp.tool()
 async def get_messages(
     entity: str,
-    limit: int = 20,
+    limit: int = 10,
+    start_date: datetime = datetime.now(timezone.utc) - timedelta(days=10),
+    end_date: datetime = datetime.now(timezone.utc),
     unread: bool = False,
     mark_as_read: bool = False,
 ) -> list[Message]:
@@ -176,7 +179,15 @@ async def get_messages(
 
         limit (`int`, optional):
             The maximum number of messages to retrieve.
-            Defaults to 20.
+            Defaults to 10.
+
+        start_date (`datetime`, optional):
+            The start date of the messages to retrieve.
+            Defaults to 10 days ago.
+
+        end_date (`datetime`, optional):
+            The end date of the messages to retrieve.
+            Defaults to now.
 
         unread (`bool`, optional):
             Whether to get only unread messages.
@@ -194,6 +205,8 @@ async def get_messages(
     return await tg.get_messages(
         int(entity) if entity.lstrip("-").isdigit() else entity,
         limit,
+        start_date,
+        end_date,
         unread,
         mark_as_read,
     )

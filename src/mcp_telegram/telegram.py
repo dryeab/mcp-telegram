@@ -6,6 +6,7 @@
 import itertools
 import logging
 
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from pydantic import SecretStr
@@ -297,50 +298,86 @@ class Telegram:
         self,
         entity: str | int,
         limit: int = 20,
+        start_date: datetime = datetime.now(timezone.utc) - timedelta(days=10),
+        end_date: datetime = datetime.now(timezone.utc),
         unread: bool = False,
         mark_as_read: bool = False,
     ) -> list[Message]:
         """Get messages from a specific entity.
 
         Args:
-            entity (`str | int`): The entity to get messages from.
-            limit (`int`, optional): The maximum number of messages to get.
-            unread (`bool`, optional): Whether to get only unread messages.
-            mark_as_read (`bool`, optional): Whether to mark the messages as read.
+            entity (`str | int`):
+                The entity to get messages from.
+            limit (`int`, optional):
+                The maximum number of messages to get. Defaults to 20.
+            start_date (`datetime`, optional):
+                The start date of the messages to get. Defaults to 10 days ago.
+            end_date (`datetime`, optional):
+                The end date of the messages to get. Defaults to now.
+            unread (`bool`, optional):
+                Whether to get only unread messages. Defaults to False.
+            mark_as_read (`bool`, optional):
+                Whether to mark the messages as read. Defaults to False.
 
         Returns:
-            `list[Message]`: A list of messages from the specific entity.
+            `list[Message]`:
+                A list of messages from the specific entity, ordered newest to oldest.
         """
+
+        # Ensure dates are timezone-aware (assume UTC if naive)
+        if start_date.tzinfo is None:
+            start_date = start_date.replace(tzinfo=timezone.utc)
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=timezone.utc)
 
         peer_id = await self.client.get_peer_id(entity)
 
         if unread:
             dialog = await self._get_dialog(entity)
-            if dialog:
-                limit = min(limit, dialog.unread_messages_count)
-
-        messages = await self.client.get_messages(peer_id, limit=limit)
-        messages = [message for message in messages if isinstance(message, patched.Message)]  # type: ignore
+            if not dialog or dialog.unread_messages_count == 0:
+                return []
+            limit = min(limit, dialog.unread_messages_count)
 
         results: list[Message] = []
-        for message in messages:
-            assert isinstance(message.message, str | None)
+        async for message in self.client.iter_messages(  # type: ignore
+            peer_id,
+            offset_date=end_date,  # fetching messages older than end_date
+        ):
+            if not isinstance(message, patched.Message):
+                continue
+
+            if message.date is None:
+                continue
+
+            if message.date < start_date:
+                break
+
+            if len(results) >= limit:
+                break
 
             if mark_as_read:
-                await message.mark_read()
+                try:
+                    await message.mark_read()
+                except Exception as e:
+                    logger.warning(f"Failed to mark message {message.id} as read: {e}")
 
-            results.append(
-                Message(
-                    message_id=message.id,
-                    sender_id=(
-                        await self.client.get_peer_id(message.from_id)
-                        if message.from_id
-                        else None  # Anonymous messages don't have a sender
-                    ),
-                    message=message.message,
-                    outgoing=message.out,
-                    date=message.date,
+            sender_id: int | None = None
+            if message.from_id:
+                try:
+                    sender_peer = await self.client.get_peer_id(message.from_id)
+                    sender_id = sender_peer
+                except Exception as e:
+                    logger.warning(f"Could not get peer ID for from_id {message.from_id}: {e}")
+
+            if isinstance(message.text, str):
+                results.append(
+                    Message(
+                        message_id=message.id,
+                        sender_id=sender_id,
+                        message=message.text,
+                        outgoing=message.out,
+                        date=message.date,
+                    )
                 )
-            )
 
         return results
