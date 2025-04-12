@@ -87,19 +87,40 @@ class Telegram:
         return self._client
 
     async def send_message(
-        self, entity: str | int, message: str, reply_to: int = 0
+        self,
+        entity: str | int,
+        message: str = "",
+        file_path: list[str] | None = None,
+        reply_to: int | None = None,
     ) -> None:
         """Send a message to a Telegram user, group, or channel.
 
         Args:
             entity (`str | int`): The recipient of the message.
-            message (`str`): The message to send.
+            message (`str`, optional): The message to send.
+            file_path (`list[str]`, optional): The list of paths to the files
+                to be sent.
             reply_to (`int`, optional): The message ID to reply to.
+
+        Raises:
+            `FileNotFoundError`: If a file does not exist or is not a file.
         """
-        if reply_to:
-            await self.client.send_message(entity, message, reply_to=reply_to)
-        else:
-            await self.client.send_message(entity, message)
+
+        if file_path:
+            for path in file_path:
+                _path = Path(path)
+                if not _path.exists() or not _path.is_file():
+                    logger.error(f"File {path} does not exist or is not a file.")
+                    raise FileNotFoundError(
+                        f"File {path} does not exist or is not a file."
+                    )
+
+        await self.client.send_message(
+            entity,
+            message,
+            file=file_path,  # type: ignore
+            reply_to=reply_to,  # type: ignore
+        )
 
     async def get_draft(self, entity: str | int) -> str:
         """Get the draft message from a specific entity.

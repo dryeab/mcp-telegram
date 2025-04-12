@@ -33,35 +33,49 @@ mcp = FastMCP(
 
 
 @mcp.tool()
-async def send_message(entity: str, message: str, reply_to: int = 0) -> str:
+async def send_message(
+    entity: str,
+    message: str = "",
+    file_path: list[str] | None = None,
+    reply_to: int | None = None,
+) -> str:
     """Send a message to a Telegram user, group, or channel.
 
     It allows sending text messages to any Telegram entity identified by `entity`.
 
+    !IMPORTANT: If you are not sure about the entity, use the `search_dialogs`
+    tool and ask the user to select the correct entity from the list.
+
     Args:
-        entity (`str`):
-            The identifier of where to send the message. This can be a Telegram
-            chat ID, a username, a phone number (in format '+1234567890'), or a
-            group/channel username. The special value "me" can be used to send
-            a message to yourself.
+        entity (`str`): The identifier of where to send the message.
+            This can be a Telegram chat ID, a username, a phone number
+            (in format '+1234567890'), or a group/channel username. The special
+            value "me" can be used to send a message to yourself.
 
-        message (`str`):
-            The text message to be sent. The message supports Markdown formatting
-            including **bold**, __italic__, `monospace`, and [URL](links).
+        message (`str`, optional): The text message to be sent.
+            The message supports Markdown formatting including **bold**, __italic__,
+            `monospace`, and [URL](links). The maximum length for a message is 35,000
+            bytes or 4,096 characters.
 
-        reply_to (`int`, optional):
-            The message ID to reply to.
+        file_path (`list[str]`, optional): The list of paths to the files to be sent.
+
+        reply_to (`int`, optional): The message ID to reply to.
 
     Returns:
         `str`:
             A success message if sent, or an error message if failed.
     """
 
-    try:
-        await tg.send_message(parse_entity(entity), message, reply_to)
-        return "Message sent"
-    except Exception as e:
-        return f"Error sending message: {e}"
+    _entity = parse_entity(entity)
+
+    await tg.send_message(
+        _entity,
+        message,
+        file_path=file_path,
+        reply_to=reply_to,
+    )
+
+    return f"Message sent to {entity}"
 
 
 @mcp.tool()
