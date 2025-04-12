@@ -167,7 +167,7 @@ async def set_draft(entity: str, message: str) -> str:
 async def get_messages(
     entity: str,
     limit: int = 10,
-    start_date: datetime = datetime.now(timezone.utc) - timedelta(days=10),
+    start_date: datetime = datetime.now(timezone.utc) - timedelta(days=100),
     end_date: datetime = datetime.now(timezone.utc),
     unread: bool = False,
     mark_as_read: bool = False,
@@ -176,6 +176,10 @@ async def get_messages(
 
     Retrieves messages from an entity specified by username, chat_id,
     phone number, or 'me'.
+
+    !IMPORTANT: If the entity is not found, it will return an error message.
+    If you are not sure about the entity, use the `search_dialogs`
+    tool and ask the user to select the correct entity from the list.
 
     Args:
         entity (`str`):
@@ -188,7 +192,7 @@ async def get_messages(
 
         start_date (`datetime`, optional):
             The start date of the messages to retrieve.
-            Defaults to 10 days ago.
+            Defaults to 100 days ago.
 
         end_date (`datetime`, optional):
             The end date of the messages to retrieve.
@@ -204,11 +208,14 @@ async def get_messages(
 
     Returns:
         `Messages`:
-            A list of messages from the entity and the dialog the messages belong to.
+            A list of messages from the entity and the dialog the messages
+            belong to if successful, or an error message if request failed.
     """
 
+    _entity = parse_entity(entity)
+
     return await tg.get_messages(
-        parse_entity(entity),
+        _entity,
         limit,
         start_date,
         end_date,

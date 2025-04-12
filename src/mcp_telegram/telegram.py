@@ -191,10 +191,9 @@ class Telegram:
         if end_date.tzinfo is None:
             end_date = end_date.replace(tzinfo=timezone.utc)
 
-        peer_id = await self.client.get_peer_id(entity)
-        __entity = await self.client.get_entity(entity)
-        assert isinstance(__entity, hints.Entity)
-        dialog = Dialog.from_entity(__entity)
+        _entity = await self.client.get_entity(entity)
+        assert isinstance(_entity, hints.Entity)
+        dialog = Dialog.from_entity(_entity)
 
         if unread:
             if not dialog or dialog.unread_messages_count == 0:
@@ -203,18 +202,19 @@ class Telegram:
 
         results: list[Message] = []
         async for message in self.client.iter_messages(  # type: ignore
-            peer_id,
+            entity,
             offset_date=end_date,  # fetching messages older than end_date
         ):
-            assert isinstance(message, patched.Message)
+            # Skip service messages and empty messages immediately
+            if not isinstance(message, patched.Message) or isinstance(
+                message, patched.MessageService | patched.MessageEmpty
+            ):
+                continue
 
             if message.date is None:
                 continue
 
-            if message.date < start_date:
-                break
-
-            if len(results) >= limit:
+            if message.date < start_date or len(results) >= limit:
                 break
 
             if mark_as_read:
@@ -223,31 +223,7 @@ class Telegram:
                 except Exception as e:
                     logger.warning(f"Failed to mark message {message.id} as read: {e}")
 
-            sender_id: int | None = None
-            if message.from_id:
-                try:
-                    sender_peer = await self.client.get_peer_id(message.from_id)
-                    sender_id = sender_peer
-                except Exception as e:
-                    logger.warning(
-                        f"Could not get peer ID for from_id {message.from_id}: {e}"
-                    )
-
-            media = Media.from_message(message)
-            message_text: str | None = (
-                message.text if isinstance(message.text, str) else None  # type: ignore
-            )
-
-            results.append(
-                Message(
-                    message_id=message.id,
-                    sender_id=sender_id,
-                    message=message_text,
-                    outgoing=message.out,
-                    date=message.date,
-                    media=media,
-                )
-            )
+            results.append(Message.from_message(message))
 
         return Messages(messages=results, dialog=dialog)
 

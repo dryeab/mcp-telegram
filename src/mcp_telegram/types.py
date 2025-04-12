@@ -7,7 +7,7 @@ from enum import Enum
 
 from pydantic import BaseModel
 from telethon import hints, types, utils  # type: ignore
-from telethon.tl import custom  # type: ignore
+from telethon.tl import custom, patched  # type: ignore
 
 
 class DialogType(Enum):
@@ -147,6 +147,47 @@ class Message(BaseModel):
     """The date and time the message was sent."""
     media: Media | None = None
     """The media associated with the message."""
+    reply_to: int | None = None
+    """The message ID that this message is replying to."""
+
+    @staticmethod
+    def from_message(message: patched.Message) -> "Message":
+        """Convert a `telethon.tl.patched.Message` object to a `Message` object.
+
+        Args:
+            message (`telethon.tl.patched.Message`): The message to convert.
+
+        Returns:
+            `Message`: The converted Message object.
+        """
+
+        sender_id: int | None = None
+        if message.from_id:
+            sender_id = int(utils.get_peer_id(message.from_id))  # type: ignore
+        media = Media.from_message(message)
+        message_text: str | None = (
+            message.text if isinstance(message.text, str) else None  # type: ignore
+        )
+        reply_to: int | None = None
+        if message.reply_to and isinstance(message.reply_to, types.MessageReplyHeader):
+            try:
+                reply_to = (
+                    int(message.reply_to.reply_to_msg_id)
+                    if message.reply_to.reply_to_msg_id
+                    else None
+                )
+            except (AttributeError, TypeError, ValueError):
+                reply_to = None
+
+        return Message(
+            message_id=message.id,
+            sender_id=sender_id,
+            message=message_text,
+            outgoing=message.out,
+            date=message.date,
+            media=media,
+            reply_to=reply_to,
+        )
 
 
 class Messages(BaseModel):
