@@ -418,19 +418,24 @@ class Telegram:
             logger.error(f"Error fetching message from link {link}: {e}", exc_info=True)
             return None
 
-    async def search_dialogs(self, query: str, limit: int = 10) -> list[Dialog]:
+    async def search_dialogs(self, query: str, limit: int) -> list[Dialog]:
         """Search for users, groups, and channels globally.
 
         Args:
             query (`str`): The search query.
-            limit (`int`, optional): Maximum number of results to return.
-                    Defaults to 10.
+            limit (`int`): Maximum number of results to return.
 
         Returns:
             `list[Dialog]`: A list of Dialog objects representing the search results.
+
+        Raises:
+            `ValueError`: If the query is empty or the limit is not greater than 0.
         """
         if not query:
             raise ValueError("Query cannot be empty!")
+
+        if limit <= 0:
+            raise ValueError("Limit must be greater than 0!")
 
         response: Any = await self.client(
             functions.contacts.SearchRequest(
@@ -445,8 +450,8 @@ class Telegram:
         for i, peer in enumerate(
             itertools.chain(response.my_results, response.results)
         ):
-            _id = await self.client.get_peer_id(peer)
-            priority[_id] = i
+            peer_id = await self.client.get_peer_id(peer)
+            priority[peer_id] = i
 
         result: list[Dialog] = []
         for x in itertools.chain(response.users, response.chats):
@@ -456,7 +461,6 @@ class Telegram:
                     result.append(dialog)
                 except Exception as e:
                     logger.warning(f"Failed to get dialog for entity {x.id}: {e}")
-                    continue
 
         # Sort results based on priority
         result.sort(key=lambda x: priority.get(x.id, float("inf")))

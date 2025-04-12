@@ -85,16 +85,21 @@ async def search_dialogs(query: str, limit: int = 10) -> list[Dialog]:
     Retrieves users, groups, and channels and filters them based
     on the provided query. The query performs a case-insensitive search.
 
+    !IMPORTANT: If the query doesn't return the correct results, it means that
+    the query is not specific enough. Try to be more specific with the query or
+    use a different query.
+
     Args:
         query (`str`): A query string to filter the dialogs.
             The search will return only dialogs where the query string is
             found within the dialog's title or username.
 
         limit (`int`, optional): The maximum number of dialogs to return.
-            Defaults to 10.
+            Defaults to 10. The limit must be greater than 0.
 
     Returns:
-        `list[Dialog]`: A list of dialogs that match the query.
+        `list[Dialog]`: A list of dialogs that match the query if successful,
+            or an error message if request failed.
     """
 
     return await tg.search_dialogs(query, limit)
