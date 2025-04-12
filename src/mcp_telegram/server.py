@@ -260,17 +260,19 @@ async def media_download(
 
 
 @mcp.tool()
-async def message_from_link(link: str) -> Message | None:
+async def message_from_link(link: str) -> Message:
     """Get a message from a link.
 
     Retrieves a message from a link.
 
+    !IMPORTANT: If the link is not a valid Telegram message link, or the account
+    is not authorized to access the message, it will return an error message.
+
     Args:
-        link (`str`):
-            The link to the message.
+        link (`str`): The link to the message.
 
     Returns:
-        `Message | None`:
-            The message from the link if successful, or None otherwise.
+        `Message`: The message from the link if successful, or an error message.
     """
+
     return await tg.message_from_link(link)

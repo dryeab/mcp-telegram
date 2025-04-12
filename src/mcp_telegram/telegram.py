@@ -286,89 +286,39 @@ class Telegram:
             f"download_media returned: {downloaded_path}"
         )
 
-    async def message_from_link(self, link: str) -> Message | None:
+    async def message_from_link(self, link: str) -> Message:
         """Get a message from a link.
 
         Args:
             link (`str`): The link to get the message from.
 
         Returns:
-            `Message | None`: The message from the link,
-            or None if not found or invalid.
+            `Message`: The message from the link.
+
+        Raises:
+            `ValueError`: If the link is not a valid Telegram link.
         """
-        try:
-            # Parse the link to get the entity and message ID
-            parsed_result = parse_telegram_url(link)
 
-            if parsed_result is None:
-                logger.warning(
-                    f"Could not parse valid entity/message ID from link: {link}"
-                )
-                return None
+        # Parse the link to get the entity and message ID
+        parsed_result = parse_telegram_url(link)
 
-            # Unpack the result now that we know it's not None
-            entity, message_id = parsed_result
-
-            # Fetch the specific message using the parsed entity and ID
-            # Use client.get_messages with ids parameter
-            message = await self.client.get_messages(entity, ids=message_id)  # type: ignore
-
-            if not message or not isinstance(message, patched.Message):
-                logger.warning(
-                    f"Could not retrieve message {message_id} from entity {entity} \
-                        (parsed from link: {link})"
-                )
-                return None
-
-            # Construct the Message object, similar to get_messages
-            sender_id: int | None = None
-            if message.from_id:
-                try:
-                    sender_peer = await self.client.get_peer_id(message.from_id)
-                    sender_id = sender_peer
-                except Exception as e:
-                    logger.warning(
-                        f"Could not get peer ID for from_id {message.from_id} "
-                        f"(message {message_id} from link {link}): {e}"
-                    )
-                    # Continue without sender_id if resolution fails
-
-            media = Media.from_message(message)
-            message_text: str | None = (
-                message.text if isinstance(message.text, str) else None  # type: ignore
+        if parsed_result is None:
+            raise ValueError(
+                f"Could not parse valid entity/message ID from link: {link}"
             )
 
-            # Ensure date is valid
-            if not isinstance(message.date, datetime):
-                logger.warning(
-                    f"Message {message_id} from link {link} has invalid date: \
-                        {message.date}"
-                )
-                return None
+        entity, message_id = parsed_result
 
-            return Message(
-                message_id=message.id,
-                sender_id=sender_id,
-                message=message_text,
-                outgoing=message.out,
-                date=message.date,
-                media=media,
+        # Fetch the specific message using the parsed entity and ID
+        message = await self.client.get_messages(entity, ids=message_id)  # type: ignore
+
+        if not message or not isinstance(message, patched.Message):
+            raise ValueError(
+                f"Could not retrieve message {message_id} from entity {entity} \
+                    (parsed from link: {link})"
             )
 
-        except (
-            ValueError
-        ) as e:  # Handle invalid link format specifically from parse_telegram_url
-            logger.warning(f"Invalid Telegram link format: {link} - {e}")
-            return None
-        except TypeError as e:
-            # Handle potential errors from parse_telegram_url returning unexpected types
-            logger.error(f"Error parsing Telegram link {link}: {e}", exc_info=True)
-            return None
-        except (
-            Exception
-        ) as e:  # Catch other potential errors (e.g., network issues, permissions)
-            logger.error(f"Error fetching message from link {link}: {e}", exc_info=True)
-            return None
+        return Message.from_message(message)
 
     async def search_dialogs(self, query: str, limit: int) -> list[Dialog]:
         """Search for users, groups, and channels globally.

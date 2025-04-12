@@ -76,23 +76,21 @@ def parse_telegram_url(url: str) -> tuple[str | int, int] | None:
         url (`str`): The Telegram URL to parse.
 
     Returns:
-        `tuple[str | int, int] | None`: A tuple containing the entity
-                                      (username string or channel_id integer
-                                      in -100... format) and the message ID integer,
-                                      or None if the URL format is not recognized.
+        `tuple[str | int, int] | None`:
+            A tuple containing the entity (username or channel_id) and the
+            message ID, or None if the URL format is not recognized.
     """
     # Regex to capture the entity (username or channel_id) and message ID
-    pattern = r"(?:https?://)?t(?:elegram)?\.me/c/(\d+)/(\d+)"
+    pattern = r"^(?:https?://)?t(?:elegram)?\.me/(?:(?P<username>[A-Za-z0-9_]+)/(?P<message_id>\d+)|c/(?P<chat_id>\d+)/(?P<chat_message_id>\d+))/?$"
 
     match = re.match(pattern, url)
 
     if match:
-        try:
-            entity = parse_entity(match.group(1))
-            message_id = int(match.group(2))
-        except Exception:
-            return None
+        captured = match.groupdict()
+        entity = captured.get("username") or captured.get("chat_id")
+        message_id = captured.get("message_id") or captured.get("chat_message_id")
 
-        return entity, message_id
+        if entity and message_id:
+            return parse_entity(entity), int(message_id)
 
     return None
