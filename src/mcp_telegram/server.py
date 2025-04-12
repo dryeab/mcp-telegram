@@ -112,6 +112,10 @@ async def get_draft(entity: str) -> str:
     Finds the draft message for an entity specified by username, chat_id,
     phone number, or 'me'.
 
+    !IMPORTANT: If the entity is not found, it will return an error message.
+    If you are not sure about the entity, use the `search_dialogs`
+    tool and ask the user to select the correct entity from the list.
+
     Args:
         entity (`str`):
             The identifier of the entity to get the draft message for.
@@ -119,10 +123,13 @@ async def get_draft(entity: str) -> str:
 
     Returns:
         `str`:
-            The draft message for the specific entity.
+            The draft message (empty string if no draft) for the specific entity
+            or an error message if request failed.
     """
 
-    return await tg.get_draft(parse_entity(entity))
+    _entity = parse_entity(entity)
+
+    return await tg.get_draft(_entity)
 
 
 @mcp.tool()
@@ -131,6 +138,10 @@ async def set_draft(entity: str, message: str) -> str:
 
     Sets a draft message for an entity specified by username, chat_id,
     phone number, or 'me'.
+
+    !IMPORTANT: If the entity is not found, it will return an error message.
+    If you are not sure about the entity, use the `search_dialogs`
+    tool and ask the user to select the correct entity from the list.
 
     Args:
         entity (`str`):
@@ -145,12 +156,11 @@ async def set_draft(entity: str, message: str) -> str:
             A success message if saved, or an error message if failed.
     """
 
-    try:
-        if await tg.set_draft(parse_entity(entity), message):
-            return "Draft saved"
-        return "Draft not saved"
-    except Exception as e:
-        return f"Error saving draft: {e}"
+    _entity = parse_entity(entity)
+
+    await tg.set_draft(_entity, message)
+
+    return f"Draft saved for {_entity}"
 
 
 @mcp.tool()
