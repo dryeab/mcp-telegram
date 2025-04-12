@@ -228,8 +228,8 @@ class Telegram:
         return Messages(messages=results, dialog=dialog)
 
     async def download_media(
-        self, entity: str | int, message_id: int
-    ) -> DownloadedMedia | None:
+        self, entity: str | int, message_id: int, path: str | None = None
+    ) -> DownloadedMedia:
         """Download media attached to a specific message to a unique local file.
 
         Args:
@@ -237,71 +237,54 @@ class Telegram:
             message_id (`int`): The ID of the message containing the media.
 
         Returns:
-            `DownloadedMedia | None`: An object containing the absolute path
-                                     and media details of the downloaded file,
-                                     or None if download fails.
+            `DownloadedMedia`: An object containing the absolute path
+                             and media details of the downloaded file.
         """
-        try:
-            logger.debug(
-                f"Attempting to download media from message {message_id} \
-                    in entity {entity}"
+
+        # Fetch the specific message
+        message = await self.client.get_messages(entity, ids=message_id)  # type: ignore
+
+        if not message or not isinstance(message, patched.Message):
+            raise ValueError(
+                f"Message {message_id} not found or invalid in entity {entity}."
             )
-            # Fetch the specific message
-            message = await self.client.get_messages(entity, ids=message_id)  # type: ignore
 
-            if not message or not isinstance(message, patched.Message):
-                logger.warning(
-                    f"Message {message_id} not found or invalid in entity {entity}."
-                )
-                return None
+        media = Media.from_message(message)
+        if not media:
+            raise ValueError(
+                f"Message {message_id} in entity {entity} does not contain \
+                    downloadable media."
+            )
 
-            media = Media.from_message(message)
-            if not media:
-                logger.warning(
-                    f"Message {message_id} in entity {entity} does not contain \
-                        downloadable media."
-                )
-                return None
-
-            filename = get_unique_filename(message)
-
+        filename = get_unique_filename(message)
+        if path:
+            filepath = Path(path) / filename
+        else:
             filepath = self._downloads_dir / filename
 
-            # Attempt to download the media to the specified file path
-            try:
-                # download_media returns the path where the file was saved
-                downloaded_path = await message.download_media(file=filepath)  # type: ignore
-            except Exception as e:
-                logger.error(
-                    f"Error during media download for message {message_id} "
-                    f"in entity {entity}: {e}",
-                    exc_info=True,
-                )
-                return None
-
-            if downloaded_path and isinstance(downloaded_path, str):
-                # Make path absolute for clarity if it's not already
-                absolute_path = str(Path(downloaded_path).resolve())
-                logger.info(
-                    f"Successfully downloaded media for message {message_id} \
-                        to {absolute_path}."
-                )
-                return DownloadedMedia(path=absolute_path, media=media)
-            else:
-                logger.error(
-                    f"Failed to download media for message {message_id}. "
-                    f"download_media returned: {downloaded_path}"
-                )
-                return None
-
+        # Attempt to download the media to the specified file path
+        try:
+            downloaded_path = await message.download_media(file=filepath)  # type: ignore
         except Exception as e:
             logger.error(
-                f"General error processing media download for message \
-                    {message_id} in entity "
-                f"{entity}: {e}",
+                f"Error during media download for message {message_id} "
+                f"in entity {entity}: {e}",
                 exc_info=True,
             )
-            return None
+            raise e
+
+        if downloaded_path and isinstance(downloaded_path, str):
+            absolute_path = str(Path(downloaded_path).resolve())
+            logger.info(
+                f"Successfully downloaded media for message {message_id} \
+                    to {absolute_path}."
+            )
+            return DownloadedMedia(path=absolute_path, media=media)
+
+        raise ValueError(
+            f"Failed to download media for message {message_id}. "
+            f"download_media returned: {downloaded_path}"
+        )
 
     async def message_from_link(self, link: str) -> Message | None:
         """Get a message from a link.

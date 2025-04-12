@@ -225,11 +225,17 @@ async def get_messages(
 
 
 @mcp.tool()
-async def media_download(entity: str, message_id: int) -> DownloadedMedia | None:
+async def media_download(
+    entity: str, message_id: int, path: str | None = None
+) -> DownloadedMedia:
     """Download media from a specific message to a unique local file.
 
     Retrieves media from an entity specified by username, chat_id,
     phone number, or 'me' and saves it to a local directory with a unique name.
+
+    !IMPORTANT: If the entity is not found, it will return an error message.
+    If you are not sure about the entity, use the `search_dialogs`
+    tool and ask the user to select the correct entity from the list.
 
     Args:
         entity (`str`):
@@ -239,13 +245,18 @@ async def media_download(entity: str, message_id: int) -> DownloadedMedia | None
         message_id (`int`):
             The ID of the message containing the media to download.
 
+        path (`str`, optional):
+            The path to save the downloaded media.
+            Defaults to a Path corresponding to `XDG_STATE_HOME`.
+
     Returns:
-        `DownloadedMedia | None`:
+        `DownloadedMedia`:
             An object containing the absolute path and media details
-            of the downloaded file if successful, or None otherwise.
-            The object has `path` (str) and `media` (Media) attributes.
+            of the downloaded file if successful or an error message.
     """
-    return await tg.download_media(parse_entity(entity), message_id)
+    _entity = parse_entity(entity)
+
+    return await tg.download_media(_entity, message_id, path)
 
 
 @mcp.tool()
