@@ -122,6 +122,27 @@ class Telegram:
             reply_to=reply_to,  # type: ignore
         )
 
+    async def edit_message(
+        self, entity: str | int, message_id: int, message: str
+    ) -> None:
+        """Edit a message from a specific entity.
+
+        Args:
+            entity (`str | int`): The identifier of the entity.
+            message_id (`int`): The ID of the message to edit.
+            message (`str`): The message to edit the message to.
+        """
+        await self.client.edit_message(entity, message_id, message)
+
+    async def delete_message(self, entity: str | int, message_ids: list[int]) -> None:
+        """Delete a message from a specific entity.
+
+        Args:
+            entity (`str | int`): The identifier of the entity.
+            message_ids (`list[int]`): The IDs of the messages to delete.
+        """
+        await self.client.delete_messages(entity, message_ids)
+
     async def get_draft(self, entity: str | int) -> str:
         """Get the draft message from a specific entity.
 

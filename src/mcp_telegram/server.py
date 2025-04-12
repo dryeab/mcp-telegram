@@ -79,6 +79,59 @@ async def send_message(
 
 
 @mcp.tool()
+async def edit_message(entity: str, message_id: int, message: str) -> str:
+    """Edit a message from a specific entity.
+
+    Edits a message from a specific entity.
+
+    !IMPORTANT: If the entity is not found, it will return an error message.
+    If you are not sure about the entity, use the `search_dialogs`
+    tool and ask the user to select the correct entity from the list.
+
+    Args:
+        entity (`str`): The identifier of the entity.
+        message_id (`int`): The ID of the message to edit.
+        message (`str`): The message to edit the message to.
+
+    Returns:
+        `str`:
+            A success message if edited, or an error message if failed.
+    """
+
+    _entity = parse_entity(entity)
+
+    await tg.edit_message(_entity, message_id, message)
+
+    return f"Message edited in {entity}"
+
+
+@mcp.tool()
+async def delete_message(entity: str, message_ids: list[int]) -> str:
+    """Delete a message from a specific entity.
+
+    Deletes a message from a specific entity.
+
+    !IMPORTANT: If the entity is not found, it will return an error message.
+    If you are not sure about the entity, use the `search_dialogs`
+    tool and ask the user to select the correct entity from the list.
+
+    Args:
+        entity (`str`): The identifier of the entity.
+        message_ids (`list[int]`): The IDs of the messages to delete.
+
+    Returns:
+        `str`:
+            A success message if deleted, or an error message if failed.
+    """
+
+    _entity = parse_entity(entity)
+
+    await tg.delete_message(_entity, message_ids)
+
+    return f"Messages deleted from {entity}"
+
+
+@mcp.tool()
 async def search_dialogs(query: str, limit: int = 10) -> list[Dialog]:
     """Search for users, groups, and channels.
 
