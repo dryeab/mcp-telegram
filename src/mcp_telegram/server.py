@@ -2,7 +2,7 @@
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 from mcp.server.fastmcp import FastMCP
 
@@ -220,8 +220,8 @@ async def set_draft(entity: str, message: str) -> str:
 async def get_messages(
     entity: str,
     limit: int = 10,
-    start_date: datetime = datetime.now(timezone.utc) - timedelta(days=100),
-    end_date: datetime = datetime.now(timezone.utc),
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
     unread: bool = False,
     mark_as_read: bool = False,
 ) -> Messages:
@@ -245,11 +245,9 @@ async def get_messages(
 
         start_date (`datetime`, optional):
             The start date of the messages to retrieve.
-            Defaults to 100 days ago.
 
         end_date (`datetime`, optional):
             The end date of the messages to retrieve.
-            Defaults to now.
 
         unread (`bool`, optional):
             Whether to get only unread messages.

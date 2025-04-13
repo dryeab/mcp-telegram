@@ -180,8 +180,8 @@ class Telegram:
         self,
         entity: str | int,
         limit: int = 20,
-        start_date: datetime = datetime.now(timezone.utc) - timedelta(days=10),
-        end_date: datetime = datetime.now(timezone.utc),
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         unread: bool = False,
         mark_as_read: bool = False,
     ) -> Messages:
@@ -193,9 +193,9 @@ class Telegram:
             limit (`int`, optional):
                 The maximum number of messages to get. Defaults to 20.
             start_date (`datetime`, optional):
-                The start date of the messages to get. Defaults to 10 days ago.
+                The start date of the messages to get.
             end_date (`datetime`, optional):
-                The end date of the messages to get. Defaults to now.
+                The end date of the messages to get.
             unread (`bool`, optional):
                 Whether to get only unread messages. Defaults to False.
             mark_as_read (`bool`, optional):
@@ -206,7 +206,14 @@ class Telegram:
                 A list of messages from the specific entity, ordered newest to oldest.
         """
 
-        # Ensure dates are timezone-aware (assume UTC if naive)
+        if end_date is None:
+            end_date = datetime.now(timezone.utc)
+
+        # make it very old if start_date is not provided
+        if start_date is None:
+            start_date = end_date - timedelta(days=10000)
+
+        # make sure the dates are timezone-aware
         if start_date.tzinfo is None:
             start_date = start_date.replace(tzinfo=timezone.utc)
         if end_date.tzinfo is None:
@@ -223,7 +230,7 @@ class Telegram:
 
         results: list[Message] = []
         async for message in self.client.iter_messages(  # type: ignore
-            entity,
+            _entity,
             offset_date=end_date,  # fetching messages older than end_date
         ):
             # Skip service messages and empty messages immediately
