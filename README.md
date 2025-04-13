@@ -38,7 +38,7 @@ The `mcp-telegram` command-line tool is your entry point.
 mcp-telegram --help # See all commands
 ```
 
-#### Login
+### Login
 
 First, authenticate with your Telegram account:
 
@@ -63,7 +63,7 @@ Your credentials are securely stored in the session file for future use.
 
 </details>
 
-#### Connect to the MCP server
+### Connect to the MCP server
 
 To use MCP Telegram with MCP clients like Claude Desktop or Cursor, you'll need to configure the MCP server. The configuration process varies by client and operating system.
 
