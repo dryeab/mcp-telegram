@@ -66,8 +66,6 @@ For detailed setup instructions, please refer to:
 - [Claude Desktop MCP Setup Guide](https://modelcontextprotocol.io/quickstart/user)
 - [Cursor MCP Documentation](https://docs.cursor.com/context/model-context-protocol)
 
-##### Quick Configuration Reference
-
 The configuration file should contain:
 ```json
 {
@@ -91,23 +89,37 @@ The configuration file should contain:
 
 After saving the configuration file, restart your application.
 
-## 🧰 Tools
+## 🧰 Available Tools
 
-The following tools are available via MCP:
+Here's a comprehensive list of tools you can use to interact with Telegram through MCP:
 
-| Name                | Description                                                             |
-| :------------------ | :---------------------------------------------------------------------- |
-| `send_message`      | Sends a text message or file to a user, group, or channel.              |
-| `edit_message`      | Edits a previously sent message.                                        |
-| `delete_message`    | Deletes one or more messages.                                           |
-| `search_dialogs`    | Searches for users, groups, and channels by name or username.           |
-| `get_draft`         | Retrieves the current message draft for a specific chat.                |
-| `set_draft`         | Sets or clears the message draft for a specific chat.                   |
-| `get_messages`      | Retrieves message history from a chat, with filtering options.          |
-| `media_download`    | Downloads media (photos, videos, documents) attached to a message.      |
-| `message_from_link` | Retrieves a specific message using its public or private Telegram link. |
+### 📨 Messaging Tools
+| Tool | Description |
+|------|-------------|
+| `send_message` | ✉️ Send text messages or files to any user, group, or channel |
+| `edit_message` | ✏️ Modify content of previously sent messages |
+| `delete_message` | 🗑️ Remove one or multiple messages |
+| `get_messages` | 📜 Retrieve message history with advanced filtering options |
 
-*Use `mcp-telegram tools` for detailed parameter information and example use cases.*
+### 🔍 Search & Navigation
+| Tool | Description |
+|------|-------------|
+| `search_dialogs` | 🔎 Find users, groups, and channels by name or username |
+| `message_from_link` | 🔗 Access specific messages using Telegram links |
+
+### 📝 Draft Management
+| Tool | Description |
+|------|-------------|
+| `get_draft` | 📋 View current message draft for any chat |
+| `set_draft` | ✍️ Create or clear message drafts |
+
+### 📂 Media Handling
+| Tool | Description |
+|------|-------------|
+| `media_download` | 📸 Download photos, videos, and documents from messages |
+
+> [!Note]
+> For detailed parameter information and example use cases, run `mcp-telegram tools` in your terminal.
 
 ## 🛠️ Troubleshooting
 
