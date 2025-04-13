@@ -46,22 +46,17 @@ First, authenticate with your Telegram account:
 mcp-telegram login
 ```
 
-<details>
-<summary>Login Process</summary>
-
 This interactive command will prompt you for:
 
-- API ID & API Hash: Obtain these from [my.telegram.org/apps](https://my.telegram.org/apps).
-- Phone Number: Your Telegram-registered phone number (international format, e.g., `+1234567890`).
-- Verification Code: Sent to your Telegram account upon first login.
-- 2FA Password: If you have Two-Factor Authentication enabled.
+- **API ID & API Hash:** Obtain these from [my.telegram.org/apps](https://my.telegram.org/apps).
+- **Phone Number:** Your Telegram-registered phone number (international format, e.g., `+1234567890`).
+- **Verification Code:** Sent to your Telegram account upon first login.
+- **2FA Password:** If you have Two-Factor Authentication enabled.
 
 Your credentials are securely stored in the session file for future use.
 
 > [!WARNING]
 > Keep your API credentials private and never share them publicly
-
-</details>
 
 ### Connect to the MCP server
 
