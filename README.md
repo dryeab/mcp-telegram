@@ -13,12 +13,12 @@ Built with [Telethon](https://github.com/LonamiWebs/Telethon), this server allow
 
 ## 🚀 Getting Started
 
-#### Prerequisites
+### Prerequisites
 
 - Python 3.10 or higher
 - [`uv`](https://github.com/astral-sh/uv)  Install via the [official uv guide](https://github.com/astral-sh/uv#installation).
 
-#### Installation
+### Installation
 
 Install the `mcp-telegram` CLI tool:
 
