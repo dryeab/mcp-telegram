@@ -1,38 +1,36 @@
 <div align="center">
   <img src="logo.png" alt="MCP Telegram Logo" width="150"/>
-  <h2 style="padding: 0px; margin-top: 0">Enable LLMs to control your Telegram</h2>
-</div>
-
-<div align="center">
-  [![PyPI version](https://badge.fury.io/py/mcp-telegram.svg)](https://badge.fury.io/py/mcp-telegram) [![Twitter Follow](https://img.shields.io/twitter/follow/dryeab?style=social)](https://twitter.com/dryeab)
+  <h2 style="padding: 0px; margin: 0">Enable LLMs to control your Telegram</h2>
 </div>
 
 ---
 
-**Connect Language Models to Telegram via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction).**
+[![GitHub stars](https://img.shields.io/github/stars/dryeab/mcp-telegram?style=social)](https://github.com/gregpr07/browser-use/stargazers) [![PyPI version](https://badge.fury.io/py/mcp-telegram.svg)](https://badge.fury.io/py/mcp-telegram) [![Twitter Follow](https://img.shields.io/twitter/follow/dryeab?style=social)](https://twitter.com/dryeab)
 
-Built with [Telethon](https://github.com/LonamiWebs/Telethon), this server allows AI agents to interact with Telegram, enabling features like sending/editing/deleting messages, searching chats, managing drafts, downloading media, and more using the MTProto API.
+**Connect Large Language Models to Telegram via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction).**
+
+Built with [Telethon](https://github.com/LonamiWebs/Telethon), this server allows AI agents to interact with Telegram, enabling features like sending/editing/deleting messages, searching chats, managing drafts, downloading media, and more using the [MTProto](https://core.telegram.org/mtproto).
 
 ## 🚀 Getting Started
 
-### 📦 Installation
+#### Prerequisites
 
-Published on PyPI as `mcp-telegram`.
+- Python 3.10 or higher
+- [`uv`](https://github.com/astral-sh/uv)  Install via the [official uv guide](https://github.com/astral-sh/uv#installation).
 
-**Requires [`uv`](https://github.com/astral-sh/uv) for installation.**
+#### Installation
+
+Install the `mcp-telegram` CLI tool:
 
 ```bash
-# Create & activate a virtual environment (optional but recommended)
-uv venv
-. .venv/bin/activate 
-
-# Install the package
-uv pip install mcp-telegram
+uv tool install mcp-telegram
 ```
 
-This installs the server and the `mcp-telegram` CLI.
 
 ## ⚙️ Usage
+
+> [!IMPORTANT]
+> Please ensure you have read and understood Telegram's [ToS](https://telegram.org/tos) before using this tool. Misuse of this tool may result in account restrictions.
 
 The `mcp-telegram` command-line tool is your entry point.
 
@@ -40,7 +38,7 @@ The `mcp-telegram` command-line tool is your entry point.
 mcp-telegram --help # See all commands
 ```
 
-### 1. Login
+#### Login
 
 First, authenticate with your Telegram account:
 
@@ -49,76 +47,56 @@ mcp-telegram login
 ```
 
 <details>
-<summary>Login Process Details</summary>
+<summary>Login Process</summary>
 
 This interactive command will prompt you for:
 
-1.  **API ID & API Hash:** Obtain these from [my.telegram.org/apps](https://my.telegram.org/apps).
-2.  **Phone Number:** Your Telegram-registered phone number (international format, e.g., `+1234567890`).
-3.  **Verification Code:** Sent to your Telegram account upon first login.
-4.  **2FA Password:** If you have Two-Factor Authentication enabled.
+- API ID & API Hash: Obtain these from [my.telegram.org/apps](https://my.telegram.org/apps).
+- Phone Number: Your Telegram-registered phone number (international format, e.g., `+1234567890`).
+- Verification Code: Sent to your Telegram account upon first login.
+- 2FA Password: If you have Two-Factor Authentication enabled.
 
-Your credentials are securely stored in the session file (see below) for future use.
+Your credentials are securely stored in the session file for future use.
+
+> [!WARNING]
+> Keep your API credentials private and never share them publicly
 
 </details>
 
-### 2. Start Server
+#### Connect to the MCP server
 
-Run the MCP server:
+To use MCP Telegram with MCP clients like Claude Desktop or Cursor, you'll need to configure the MCP server. The configuration process varies by client and operating system.
 
-```bash
-mcp-telegram start
+For detailed setup instructions, please refer to:
+- [Claude Desktop MCP Setup Guide](https://modelcontextprotocol.io/quickstart/user)
+- [Cursor MCP Documentation](https://docs.cursor.com/context/model-context-protocol)
+
+##### Quick Configuration Reference
+
+The configuration file should contain:
+```json
+{
+  "mcpServers": {
+      "mcp-telegram": {
+          "command": "mcp-telegram",
+          "args": ["start"],
+          "env": {
+              "API_ID": "<your_api_id>",
+              "API_HASH": "<your_api_hash>"
+          }
+      }
+  }
+}
 ```
 
-The server will listen for incoming MCP client connections.
+> [!Note]
+> Configuration paths vary by OS and client. For example:
+> - macOS: `~/Library/Application Support/Claude/` or `~/.cursor/`
+> - Windows: `%APPDATA%\Claude\` or `%APPDATA%\Cursor\`
 
-### Other Commands
+After saving the configuration file, restart your application.
 
-*   `mcp-telegram tools`: List available MCP tools with descriptions and parameters.
-*   `mcp-telegram version`: Show the installed package version.
-
-## 📁 Configuration & Data
-
-*   **Session File:** Securely stores your login session.
-*   **Media Downloads:** Default location for files downloaded via the `media_download` tool.
-
-<details>
-<summary>Default File Paths</summary>
-
-Locations follow standard user directories:
-
-*   **Linux/macOS:**
-    *   Session: `$XDG_STATE_HOME/mcp-telegram/session` (usually `~/.local/state/mcp-telegram/session`)
-    *   Downloads: `$XDG_STATE_HOME/mcp-telegram/downloads/`
-*   **Windows:**
-    *   Session: `%LOCALAPPDATA%\mcp-telegram\mcp-telegram\session`
-    *   Downloads: `%LOCALAPPDATA%\mcp-telegram\mcp-telegram\downloads\`
-
-*(Note: The `media_download` tool allows specifying a custom download path.)*
-
-</details>
-
-## ⚠️ Concurrency & Locking
-
-Running multiple `mcp-telegram` instances using the *same session file* can cause `database is locked` errors due to Telethon's SQLite session storage. Ensure only one instance uses a session file at a time.
-
-<details>
-<summary>Force-Stopping Existing Processes</summary>
-
-If you need to stop potentially stuck processes:
-
-*   **macOS / Linux:** `pkill -f "mcp-telegram"`
-*   **Windows:** `taskkill /F /IM mcp-telegram.exe /T` (Check Task Manager for the exact process name)
-
-</details>
-
-## 🛡️ Security Notes & Disclaimer
-
-*   **API Credentials:** **NEVER** share your `API ID` and `API Hash` publicly. They are handled securely during the interactive `login` and stored within the encrypted session file.
-*   **Account Safety:** Automation via APIs carries inherent risks. This project **does not guarantee the safety of your Telegram account**.
-*   **Terms of Service:** Using this tool might conflict with Telegram's Terms of Service depending on usage. **You are solely responsible for compliance.** Misuse could lead to account restrictions. Use responsibly.
-
-## 🧰 MCP Server Tools
+## 🧰 Tools
 
 The following tools are available via MCP:
 
@@ -136,14 +114,33 @@ The following tools are available via MCP:
 
 *Use `mcp-telegram tools` for detailed parameter information and example use cases.*
 
-## 🌐 Learn More about MCP
+## 🛠️ Troubleshooting
 
-*   **MCP Documentation:** [modelcontextprotocol.io/introduction](https://modelcontextprotocol.io/introduction)
+### Database Locked Errors
 
-## 🙏 Acknowledgements
+Running multiple `mcp-telegram` instances using the *same session file* can cause `database is locked` errors due to Telethon's SQLite session storage. Ensure only one instance uses a session file at a time.
 
-*   Built upon the excellent [**Telethon**](https://github.com/LonamiWebs/Telethon) library.
+<details>
+<summary>Force-Stopping Existing Processes</summary>
 
-## 📄 License
+If you need to stop potentially stuck processes:
 
-MIT License. See the `LICENSE` file.
+*   **macOS / Linux:** `pkill -f "mcp-telegram"`
+*   **Windows:** `taskkill /F /IM mcp-telegram.exe /T` (Check Task Manager for the exact process name)
+
+</details>
+
+## 🤝 Contributing
+
+We welcome contributions! If you'd like to help improve MCP Telegram, please feel free to submit issues, feature requests, or pull requests. Your feedback and contributions help make this project better for everyone.
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+  <p>Made with ❤️ by <a href="https://x.com/dryeab">Yeabsira Driba</a></p>
+</div>
+
