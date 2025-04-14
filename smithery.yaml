@@ -1,0 +1,31 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - apiId
+      - apiHash
+    properties:
+      apiId:
+        type: string
+        description: Your Telegram API ID obtained from my.telegram.org
+      apiHash:
+        type: string
+        description: Your Telegram API Hash obtained from my.telegram.org
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'mcp-telegram',
+      args: ['start'],
+      env: {
+        API_ID: config.apiId,
+        API_HASH: config.apiHash
+      }
+    })
+  exampleConfig:
+    apiId: "123456"
+    apiHash: abcdef123456

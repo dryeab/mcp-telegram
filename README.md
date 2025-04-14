@@ -5,7 +5,7 @@
 
 ---
 
-[![GitHub stars](https://img.shields.io/github/stars/dryeab/mcp-telegram?style=social)](https://github.com/dryeab/mcp-telegram/stargazers) [![PyPI version](https://badge.fury.io/py/mcp-telegram.svg)](https://badge.fury.io/py/mcp-telegram) [![Twitter Follow](https://img.shields.io/twitter/follow/dryeab?style=social)](https://twitter.com/dryeab)
+[![GitHub stars](https://img.shields.io/github/stars/dryeab/mcp-telegram?style=social)](https://github.com/dryeab/mcp-telegram/stargazers) [![PyPI version](https://badge.fury.io/py/mcp-telegram.svg)](https://badge.fury.io/py/mcp-telegram) [![Twitter Follow](https://img.shields.io/twitter/follow/dryeab?style=social)](https://twitter.com/dryeab) [![smithery badge](https://smithery.ai/badge/@dryeab/mcp-telegram)](https://smithery.ai/server/@dryeab/mcp-telegram)
 
 **Connect Large Language Models to Telegram via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction).**
 
@@ -26,6 +26,13 @@ Install the `mcp-telegram` CLI tool:
 uv tool install mcp-telegram
 ```
 
+### Installing via Smithery
+
+To install MCP Telegram for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@dryeab/mcp-telegram):
+
+```bash
+npx -y @smithery/cli install @dryeab/mcp-telegram --client claude
+```
 
 ## ⚙️ Usage
 
