@@ -14,7 +14,7 @@ Built with [Telethon](https://github.com/LonamiWebs/Telethon), this server allow
 ### Prerequisites
 
 - Python 3.10 or higher
-- [`uv`](https://github.com/astral-sh/uv)  Install via the [official uv guide](https://github.com/astral-sh/uv#installation).
+- [`uv`](https://github.com/astral-sh/uv) Install via the [official uv guide](https://github.com/astral-sh/uv#installation).
 
 ### Installation
 
@@ -23,7 +23,6 @@ Install the `mcp-telegram` CLI tool:
 ```bash
 uv tool install mcp-telegram
 ```
-
 
 ## ⚙️ Usage
 
@@ -61,29 +60,35 @@ Your credentials are securely stored in the session file for future use.
 To use MCP Telegram with MCP clients like Claude Desktop or Cursor, you'll need to configure the MCP server. The configuration process varies by client and operating system.
 
 For detailed setup instructions, please refer to:
+
 - [Claude Desktop MCP Setup Guide](https://modelcontextprotocol.io/quickstart/user)
 - [Cursor MCP Documentation](https://docs.cursor.com/context/model-context-protocol)
 
 The configuration file should contain:
+
 ```json
 {
   "mcpServers": {
-      "mcp-telegram": {
-          "command": "mcp-telegram",
-          "args": ["start"],
-          "env": {
-              "API_ID": "<your_api_id>",
-              "API_HASH": "<your_api_hash>"
-          }
+    "mcp-telegram": {
+      "command": "mcp-telegram" /* Use full path if client can't find the command (e.g. "/usr/local/bin/mcp-telegram"). See IMPORTANT section below for full path instructions. */,
+      "args": ["start"],
+      "env": {
+        "API_ID": "<your_api_id>",
+        "API_HASH": "<your_api_hash>"
       }
+    }
   }
 }
 ```
 
 > [!Note]
 > Configuration paths vary by OS and client. For example:
+>
 > - macOS: `~/Library/Application Support/Claude/` or `~/.cursor/`
 > - Windows: `%APPDATA%\Claude\` or `%APPDATA%\Cursor\`
+
+> [!IMPORTANT]
+> If your client cannot execute `mcp-telegram` despite it being accessible in the terminal, try using the full path to the executable. You can find this by running `which mcp-telegram` (macOS/Linux) or `where mcp-telegram` (Windows) in your terminal. Replace the `command` value in the configuration with the full path.
 
 After saving the configuration file, restart your application.
 
@@ -92,28 +97,32 @@ After saving the configuration file, restart your application.
 Here's a comprehensive list of tools you can use to interact with Telegram through MCP:
 
 ### 📨 Messaging Tools
-| Tool | Description |
-|------|-------------|
-| `send_message` | ✉️ Send text messages or files to any user, group, or channel |
-| `edit_message` | ✏️ Modify content of previously sent messages |
-| `delete_message` | 🗑️ Remove one or multiple messages |
-| `get_messages` | 📜 Retrieve message history with advanced filtering options |
+
+| Tool             | Description                                                   |
+| ---------------- | ------------------------------------------------------------- |
+| `send_message`   | ✉️ Send text messages or files to any user, group, or channel |
+| `edit_message`   | ✏️ Modify content of previously sent messages                 |
+| `delete_message` | 🗑️ Remove one or multiple messages                            |
+| `get_messages`   | 📜 Retrieve message history with advanced filtering options   |
 
 ### 🔍 Search & Navigation
-| Tool | Description |
-|------|-------------|
-| `search_dialogs` | 🔎 Find users, groups, and channels by name or username |
-| `message_from_link` | 🔗 Access specific messages using Telegram links |
+
+| Tool                | Description                                             |
+| ------------------- | ------------------------------------------------------- |
+| `search_dialogs`    | 🔎 Find users, groups, and channels by name or username |
+| `message_from_link` | 🔗 Access specific messages using Telegram links        |
 
 ### 📝 Draft Management
-| Tool | Description |
-|------|-------------|
+
+| Tool        | Description                                |
+| ----------- | ------------------------------------------ |
 | `get_draft` | 📋 View current message draft for any chat |
-| `set_draft` | ✍️ Create or clear message drafts |
+| `set_draft` | ✍️ Create or clear message drafts          |
 
 ### 📂 Media Handling
-| Tool | Description |
-|------|-------------|
+
+| Tool             | Description                                             |
+| ---------------- | ------------------------------------------------------- |
 | `media_download` | 📸 Download photos, videos, and documents from messages |
 
 > [!Note]
@@ -123,15 +132,15 @@ Here's a comprehensive list of tools you can use to interact with Telegram throu
 
 ### Database Locked Errors
 
-Running multiple `mcp-telegram` instances using the *same session file* can cause `database is locked` errors due to Telethon's SQLite session storage. Ensure only one instance uses a session file at a time.
+Running multiple `mcp-telegram` instances using the _same session file_ can cause `database is locked` errors due to Telethon's SQLite session storage. Ensure only one instance uses a session file at a time.
 
 <details>
 <summary>Force-Stopping Existing Processes</summary>
 
 If you need to stop potentially stuck processes:
 
-*   **macOS / Linux:** `pkill -f "mcp-telegram"`
-*   **Windows:** `taskkill /F /IM mcp-telegram.exe /T` (Check Task Manager for the exact process name)
+- **macOS / Linux:** `pkill -f "mcp-telegram"`
+- **Windows:** `taskkill /F /IM mcp-telegram.exe /T` (Check Task Manager for the exact process name)
 
 </details>
 
@@ -148,4 +157,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
   <p>Made with ❤️ by <a href="https://x.com/dryeab">Yeabsira Driba</a></p>
 </div>
-
