@@ -1,9 +1,7 @@
 <div align="center">
   <img src="logo.png" alt="MCP Telegram Logo" width="150"/>
-  <h2 style="padding: 0px; margin: 0">Enable LLMs to control your Telegram</h2>
+  <h2 style="margin-top: 0">Enable LLMs to control your Telegram</h2>
 </div>
-
----
 
 [![GitHub stars](https://img.shields.io/github/stars/dryeab/mcp-telegram?style=social)](https://github.com/dryeab/mcp-telegram/stargazers) [![PyPI version](https://badge.fury.io/py/mcp-telegram.svg)](https://badge.fury.io/py/mcp-telegram) [![Twitter Follow](https://img.shields.io/twitter/follow/dryeab?style=social)](https://twitter.com/dryeab)
 
