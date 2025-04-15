@@ -1,6 +1,6 @@
 [project]
 name = "mcp-telegram"
-version = "0.1.0"
+version = "0.1.11"
 description = "MCP Server for Telegram"
 readme = "README.md"
 requires-python = ">=3.10"
