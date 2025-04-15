@@ -4,6 +4,8 @@ import asyncio
 import importlib.metadata
 import logging
 import sys
+import os
+from pathlib import Path
 
 from collections.abc import Callable, Coroutine
 from functools import wraps
@@ -179,6 +181,63 @@ async def login() -> None:
 def start() -> None:
     """Start the MCP Telegram server."""
     mcp.run()
+
+
+@app.command()
+def logout() -> None:
+    """Show instructions on how to logout from Telegram."""
+    console.print(
+        Panel.fit(
+            "[bold blue]How to Logout from Telegram[/bold blue]\n\n"
+            "To logout from your Telegram account, please follow these steps:\n\n"
+            "1. Open your Telegram app\n"
+            "2. Go to [bold]Settings[/bold]\n"
+            "3. Select [bold]Privacy and Security[/bold]\n"
+            "4. Scroll down to find [bold]'Active Sessions'[/bold]\n"
+            "5. Find and terminate the session with the name of your app\n   "
+            "(This is the app name you created on [link]my.telegram.org/apps[/link])\n\n"
+            "[yellow]Note:[/yellow] After logging out, you can use the [bold]clear-session[/bold] "
+            "command to remove local session data.",
+            title="🚪 Logout Instructions",
+            border_style="blue",
+        )
+    )
+
+
+@app.command()
+def clear_session() -> None:
+    """Delete the local Telegram session file."""
+
+    session_file = Telegram().session_file.with_suffix(".session")
+
+    if session_file.exists():
+        try:
+            os.remove(session_file)
+            console.print(
+                Panel.fit(
+                    "[bold green]Session file successfully deleted![/bold green]\n"
+                    "[dim]You can now safely create a new session by logging in again.[/dim]",
+                    title="🗑️ Session Cleared",
+                    border_style="green",
+                )
+            )
+        except Exception as e:
+            console.print(
+                Panel.fit(
+                    f"[bold red]Failed to delete session file:[/bold red]\n{str(e)}",
+                    title="❌ Error",
+                    border_style="red",
+                )
+            )
+    else:
+        console.print(
+            Panel.fit(
+                "[bold yellow]No session file found![/bold yellow]\n"
+                "[dim]The session file may have already been deleted or never existed.[/dim]",
+                title="ℹ️ Info",
+                border_style="yellow",
+            )
+        )
 
 
 def _format_parameters(schema: dict[str, Any]) -> str:

@@ -39,6 +39,8 @@ class Telegram:
         self._state_dir = xdg_state_home() / "mcp-telegram"
         self._state_dir.mkdir(parents=True, exist_ok=True)
 
+        self._session_file = self._state_dir / "session"
+
         self._downloads_dir = self._state_dir / "downloads"
         self._downloads_dir.mkdir(parents=True, exist_ok=True)
 
@@ -49,6 +51,10 @@ class Telegram:
         if self._client is None:
             raise RuntimeError("Client not created!")
         return self._client
+
+    @property
+    def session_file(self) -> Path:
+        return self._session_file
 
     def create_client(
         self, api_id: str | None = None, api_hash: str | None = None
@@ -79,7 +85,7 @@ class Telegram:
             settings = Settings(api_id=api_id, api_hash=SecretStr(api_hash))
 
         self._client = TelegramClient(
-            session=self._state_dir / "session",
+            session=self._session_file,
             api_id=int(settings.api_id),
             api_hash=settings.api_hash.get_secret_value(),
         )
