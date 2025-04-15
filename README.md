@@ -55,6 +55,9 @@ Your credentials are securely stored in the session file for future use.
 > [!WARNING]
 > Keep your API credentials private and never share them publicly
 
+> [!NOTE]
+> Use `mcp-telegram logout` to logout from current session or `mcp-telegram clear-session` to remove all stored session data.
+
 ### Connect to the MCP server
 
 To use MCP Telegram with MCP clients like Claude Desktop or Cursor, you'll need to configure the MCP server. The configuration process varies by client and operating system.
