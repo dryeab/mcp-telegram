@@ -132,7 +132,9 @@ async def delete_message(entity: str, message_ids: list[int]) -> str:
 
 
 @mcp.tool()
-async def search_dialogs(query: str, limit: int = 10, global_search: bool = False) -> list[Dialog]:
+async def search_dialogs(
+    query: str, limit: int = 10, global_search: bool = False
+) -> list[Dialog]:
     """Search for users, groups, and channels.
 
     Retrieves users, groups, and channels and filters them based
@@ -149,7 +151,7 @@ async def search_dialogs(query: str, limit: int = 10, global_search: bool = Fals
 
         limit (`int`, optional): The maximum number of dialogs to return.
             Defaults to 10. The limit must be greater than 0.
-        
+
         global_search (`bool`, optional): Whether to perform a global search.
             Defaults to False.
 

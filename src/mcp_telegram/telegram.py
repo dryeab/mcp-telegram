@@ -381,7 +381,8 @@ class Telegram:
 
                 if permissions.is_banned:
                     assert isinstance(
-                        permissions.participant, types.ChannelParticipantBanned  # type: ignore
+                        permissions.participant,  # type: ignore
+                        types.ChannelParticipantBanned,
                     )
                     return not permissions.participant.banned_rights.send_messages
 
@@ -402,7 +403,8 @@ class Telegram:
         Args:
             query (`str`): The search query.
             limit (`int`): Maximum number of results to return.
-            global_search (`bool`, optional): Whether to search globally. Defaults to False.
+            global_search (`bool`, optional): Whether to search globally.
+                Defaults to False.
 
         Returns:
             `list[Dialog]`: A list of Dialog objects representing the search results.

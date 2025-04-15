@@ -3,9 +3,8 @@
 import asyncio
 import importlib.metadata
 import logging
-import sys
 import os
-from pathlib import Path
+import sys
 
 from collections.abc import Callable, Coroutine
 from functools import wraps
@@ -157,8 +156,7 @@ async def login() -> None:
         console.print(
             Panel.fit(
                 f"[bold green]Authentication successful![/bold green]\n"
-                f"[dim]Welcome, {user.first_name}! You can now use \
-                        MCP Telegram commands.[/dim]",
+                f"[dim]Welcome, {user.first_name}! You can now use MCP Telegram commands.[/dim]",  # type: ignore  # noqa: E501
                 title="🎉 Success",
                 border_style="green",
             )
@@ -195,8 +193,8 @@ def logout() -> None:
             "3. Select [bold]Privacy and Security[/bold]\n"
             "4. Scroll down to find [bold]'Active Sessions'[/bold]\n"
             "5. Find and terminate the session with the name of your app\n   "
-            "(This is the app name you created on [link]my.telegram.org/apps[/link])\n\n"
-            "[yellow]Note:[/yellow] After logging out, you can use the [bold]clear-session[/bold] "
+            "(This is the app name you created on [link]my.telegram.org/apps[/link])\n\n"  # noqa: E501
+            "[yellow]Note:[/yellow] After logging out, you can use the [bold]clear-session[/bold] "  # noqa: E501
             "command to remove local session data.",
             title="🚪 Logout Instructions",
             border_style="blue",
@@ -216,7 +214,7 @@ def clear_session() -> None:
             console.print(
                 Panel.fit(
                     "[bold green]Session file successfully deleted![/bold green]\n"
-                    "[dim]You can now safely create a new session by logging in again.[/dim]",
+                    "[dim]You can now safely create a new session by logging in again.[/dim]",  # noqa: E501
                     title="🗑️ Session Cleared",
                     border_style="green",
                 )
@@ -233,7 +231,7 @@ def clear_session() -> None:
         console.print(
             Panel.fit(
                 "[bold yellow]No session file found![/bold yellow]\n"
-                "[dim]The session file may have already been deleted or never existed.[/dim]",
+                "[dim]The session file may have already been deleted or never existed.[/dim]",  # noqa: E501
                 title="ℹ️ Info",
                 border_style="yellow",
             )
