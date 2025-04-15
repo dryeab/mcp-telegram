@@ -87,6 +87,8 @@ async def edit_message(entity: str, message_id: int, message: str) -> str:
     !IMPORTANT: If the entity is not found, it will return an error message.
     If you are not sure about the entity, use the `search_dialogs`
     tool and ask the user to select the correct entity from the list.
+    If you are not sure about the message ID, use the `get_messages`
+    tool to get the message ID.
 
     Args:
         entity (`str`): The identifier of the entity.
@@ -107,13 +109,15 @@ async def edit_message(entity: str, message_id: int, message: str) -> str:
 
 @mcp.tool()
 async def delete_message(entity: str, message_ids: list[int]) -> str:
-    """Delete a message from a specific entity.
+    """Delete messages from a specific entity.
 
-    Deletes a message from a specific entity.
+    Deletes messages from a specific entity.
 
     !IMPORTANT: If the entity is not found, it will return an error message.
     If you are not sure about the entity, use the `search_dialogs`
     tool and ask the user to select the correct entity from the list.
+    If you are not sure about the message IDs, use the `get_messages`
+    tool to get the message IDs.
 
     Args:
         entity (`str`): The identifier of the entity.
