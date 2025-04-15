@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class Settings(BaseSettings):
     """Settings for the Telegram client."""
 
-    api_id: int
+    api_id: str
     api_hash: SecretStr
 
 
@@ -51,7 +51,7 @@ class Telegram:
         return self._client
 
     def create_client(
-        self, api_id: int | None = None, api_hash: str | None = None
+        self, api_id: str | None = None, api_hash: str | None = None
     ) -> TelegramClient:
         """Create a Telegram client.
 
@@ -80,7 +80,7 @@ class Telegram:
 
         self._client = TelegramClient(
             session=self._state_dir / "session",
-            api_id=settings.api_id,
+            api_id=int(settings.api_id),
             api_hash=settings.api_hash.get_secret_value(),
         )
 
@@ -348,12 +348,55 @@ class Telegram:
 
         return Message.from_message(message)
 
-    async def search_dialogs(self, query: str, limit: int) -> list[Dialog]:
+    async def _can_send_message(self, entity: hints.Entity) -> bool:
+        """Check if the logged-in account can send messages to an entity.
+
+        Args:
+            entity (`hints.Entity`): The entity to check.
+
+        Returns:
+            `bool`: Whether the account can send messages to the entity.
+        """
+
+        if isinstance(entity, types.User):
+            return True
+        else:
+            try:
+                permissions = await self.client.get_permissions(entity, "me")
+                assert isinstance(permissions, custom.ParticipantPermissions)
+
+                if permissions.is_creator or (
+                    permissions.is_admin and permissions.post_messages
+                ):
+                    return True
+
+                if isinstance(entity, types.Channel) and entity.broadcast:
+                    return False  # Regular members can't send to broadcast channels
+
+                if permissions.is_banned:
+                    assert isinstance(
+                        permissions.participant, types.ChannelParticipantBanned  # type: ignore
+                    )
+                    return not permissions.participant.banned_rights.send_messages
+
+                banned_rights = await self.client.get_permissions(entity)
+                assert isinstance(banned_rights, types.ChatBannedRights)
+
+                return not banned_rights.send_messages
+
+            except Exception as e:
+                logger.warning(f"Failed to get permissions for entity {entity}: {e}")
+                return False
+
+    async def search_dialogs(
+        self, query: str, limit: int, global_search: bool = False
+    ) -> list[Dialog]:
         """Search for users, groups, and channels globally.
 
         Args:
             query (`str`): The search query.
             limit (`int`): Maximum number of results to return.
+            global_search (`bool`, optional): Whether to search globally. Defaults to False.
 
         Returns:
             `list[Dialog]`: A list of Dialog objects representing the search results.
@@ -379,6 +422,8 @@ class Telegram:
         priority: dict[int, int] = {}
         for i, peer in enumerate(
             itertools.chain(response.my_results, response.results)
+            if global_search
+            else response.my_results
         ):
             peer_id = await self.client.get_peer_id(peer)
             priority[peer_id] = i
@@ -386,13 +431,16 @@ class Telegram:
         result: list[Dialog] = []
         for x in itertools.chain(response.users, response.chats):
             if isinstance(x, hints.Entity):
-                try:
-                    dialog = Dialog.from_entity(x)
-                    result.append(dialog)
-                except Exception as e:
-                    logger.warning(f"Failed to get dialog for entity {x.id}: {e}")
+                peer_id = await self.client.get_peer_id(x)
+                if peer_id in priority:
+                    can_send_message = await self._can_send_message(x)
+                    try:
+                        dialog = Dialog.from_entity(x, can_send_message)
+                        result.append(dialog)
+                    except Exception as e:
+                        logger.warning(f"Failed to get dialog for entity {x.id}: {e}")
 
         # Sort results based on priority
-        result.sort(key=lambda x: priority.get(x.id, float("inf")))
+        result.sort(key=lambda x: priority.get(x.id))  # type: ignore
 
         return result

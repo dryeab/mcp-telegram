@@ -98,13 +98,11 @@ async def login() -> None:
     console.print("\n[yellow]Please enter your credentials:[/yellow]")
 
     try:
-        api_id = int(
-            console.input(
-                "\n[bold cyan]🔑 API ID[/bold cyan]\n"
-                "[dim]Enter your Telegram API ID (found on my.telegram.org)[/dim]\n"
-                "> ",
-                password=True,
-            )
+        api_id = console.input(
+            "\n[bold cyan]🔑 API ID[/bold cyan]\n"
+            "[dim]Enter your Telegram API ID (found on my.telegram.org)[/dim]\n"
+            "> ",
+            password=True,
         )
 
         api_hash = console.input(
