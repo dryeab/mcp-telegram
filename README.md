@@ -3,7 +3,12 @@
   <h2 style="margin-top: 0">Enable LLMs to control your Telegram</h2>
 </div>
 
-[![GitHub stars](https://img.shields.io/github/stars/dryeab/mcp-telegram?style=social)](https://github.com/dryeab/mcp-telegram/stargazers) [![PyPI version](https://badge.fury.io/py/mcp-telegram.svg)](https://badge.fury.io/py/mcp-telegram) [![PyPI Downloads](https://static.pepy.tech/badge/mcp-telegram)](https://pepy.tech/projects/mcp-telegram) [![Twitter Follow](https://img.shields.io/twitter/follow/dryeab?style=social)](https://twitter.com/dryeab)
+<div align="center">
+    <a href="https://github.com/dryeab/mcp-telegram/stargazers"><img src="https://img.shields.io/github/stars/dryeab/mcp-telegram?style=social" alt="GitHub stars"></a>
+    <a href="https://badge.fury.io/py/mcp-telegram"><img src="https://badge.fury.io/py/mcp-telegram.svg" alt="PyPI version"></a>
+    <a href="https://pepy.tech/projects/mcp-telegram"><img src="https://static.pepy.tech/badge/mcp-telegram" alt="PyPI Downloads"></a>
+    <a href="https://x.com/dryeab"><img src="https://img.shields.io/twitter/follow/dryeab?style=social" alt="Twitter Follow"></a>
+</div>
 
 **Connect Large Language Models to Telegram via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction).**
 
