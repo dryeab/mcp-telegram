@@ -15,6 +15,29 @@
 
 Built with [Telethon](https://github.com/LonamiWebs/Telethon), this server allows AI agents to interact with Telegram, enabling features like sending/editing/deleting messages, searching chats, managing drafts, downloading media, and more using the [MTProto](https://core.telegram.org/mtproto).
 
+
+<details>
+<summary><strong>Table&nbsp;of&nbsp;Contents</strong></summary>
+
+- [🚀 Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [⚙️ Usage](#️-usage)
+  - [Login](#login)
+  - [Connect to the MCP server](#connect-to-the-mcp-server)
+- [🧰 Available Tools](#-available-tools)
+  - [📨 Messaging Tools](#-messaging-tools)
+  - [🔍 Search & Navigation](#-search--navigation)
+  - [📝 Draft Management](#-draft-management)
+  - [📂 Media Handling](#-media-handling)
+- [🛠️ Troubleshooting](#️-troubleshooting)
+- [🤝 Contributing](#-contributing)
+- [📝 License](#-license)
+
+</details>
+
+
+
 ## 🚀 Getting Started
 
 ### Prerequisites
