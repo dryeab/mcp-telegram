@@ -6,7 +6,6 @@
 <div align="center">
     <a href="https://github.com/dryeab/mcp-telegram/stargazers"><img src="https://img.shields.io/github/stars/dryeab/mcp-telegram?style=social" alt="GitHub stars"></a>
     <a href="https://badge.fury.io/py/mcp-telegram"><img src="https://badge.fury.io/py/mcp-telegram.svg" alt="PyPI version"></a>
-    <a href="https://pepy.tech/projects/mcp-telegram"><img src="https://static.pepy.tech/badge/mcp-telegram" alt="PyPI Downloads"></a>
     <a href="https://x.com/dryeab"><img src="https://img.shields.io/twitter/follow/dryeab?style=social" alt="Twitter Follow"></a>
 </div>
 <h3></h3>
